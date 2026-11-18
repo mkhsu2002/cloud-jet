@@ -7,3 +7,7 @@ Codex is the primary implementation assistant. Use WebStorm for genuine debuggin
 Keep deterministic simulation separate from rendering. Timestamp input, ignore key-repeat, reset on replay and handle blur. Test frame-rate independence and recovery paths. Choose a supported Node LTS when scaffolding and pin dependencies with a lockfile.
 
 Do not commit secrets, personal machine paths, browser profiles, generated caches or local IDE workspace files. Do not deploy, submit an entry, purchase tools or add telemetry without authorization. Keep third-party assets and trademarks subject to their own licenses.
+
+## Project language
+
+Use English throughout the project, including documentation, source comments, UI copy, tests and development logs. Preserve factual accuracy when translating existing material.

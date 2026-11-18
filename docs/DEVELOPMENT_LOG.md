@@ -17,3 +17,9 @@
 - Kept the installation to WebStorm only, without Unity, Rider or Toolbox.
 - First launch, license selection / account sign-in, IDE configuration and actual debugging remain **not performed**. No paid subscription was started.
 - The repository is documentation-only at this checkpoint. Git whitespace checks passed; there are no game tests or build results to claim.
+
+## 2026-11-18 · English project language
+
+- Translated the README into English while preserving the existing facts, design choices, links and implementation-status caveats.
+- Checked all tracked project files for remaining Chinese text; none remained.
+- Recorded English as the project-wide language for documentation, code comments, UI copy, tests and development logs.
