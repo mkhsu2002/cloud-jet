@@ -29,3 +29,5 @@ The setup machine initially has Node 23.9.0. Before creating the Vite/Three.js s
 ## Status
 
 See DEVELOPMENT_LOG.md for observed setup results. Installation, first launch / license activation, actual debugging, and actual test execution are separate milestones.
+
+WebStorm 2026.3 (Apple Silicon) has been installed and its signature verified during setup. Open WebStorm, complete any required first-launch / licensing steps, then choose this repository folder. No license selection, login or paid subscription has been performed automatically. When scaffolding is added, update this file with the actual run/test commands and verified IDE setup.
