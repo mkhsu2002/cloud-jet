@@ -2,6 +2,10 @@
 
 Updated: 2026-11-19. This replaces the pre-implementation MVP plan; use QA.md for actual check results.
 
+## Experience status
+
+V1 functionality is implemented, but MK rejected the experience on 2026-11-19. Treat the list below as prototype capabilities, not quality approval. See UPGRADE_V2.md for the proposed replacement direction.
+
 ## Implemented
 
 - Deterministic fixed-step simulation, ordered timestamped input, drift entry/hold/release, speed, wall contact and forgiving completion.

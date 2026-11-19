@@ -4,6 +4,10 @@
 
 A playable, browser-based hover-racing time trial by FlyPig. Fly above the clouds, hold a drift through the bend, and release into a burst of speed. Mistakes cost time; they never eliminate you.
 
+## Current status
+
+The public version is a **v1 playable prototype**. On November 19, 2026, MK rejected its handling, visual/audio quality and lack of story motivation. Functional tests and completed laps do not establish experiential acceptance. The [v2 redesign proposal](docs/UPGRADE_V2.md) proposes a storm-courier mission and a representative quality slice before full-route production. No v2 implementation or deployment has occurred.
+
 ## Play
 
 **[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA.md) for verified checks and limitations.

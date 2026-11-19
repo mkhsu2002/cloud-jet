@@ -2,6 +2,10 @@
 
 Checked: 2026-11-19 (America/Vancouver). These results describe this sprint, not independent event validation.
 
+## Experience qualification
+
+On 2026-11-19, MK rejected the v1 handling, visuals, sound and absence of a motivating story. The results below verify functionality and publication only. They are not evidence of fun, artistic quality or experience acceptance. See UPGRADE_V2.md for the proposed redesign.
+
 ## Build and automated behavior
 
 - Node 24.22.3, Vite 8.3.8, Three.js 0.187.0, TypeScript 5.9.3 and Vitest 5.1.1 are pinned.

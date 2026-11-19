@@ -56,3 +56,10 @@
 - Verified full-screen switching, landscape layout, interrupted-attempt restart and returning to a clean hangar. No competition submission or account terms acceptance occurred.
 - Updated the quality workflow to official checkout v7.0.1 and setup-node v7.1.0 (both Node 24 actions) after the first run reported deprecated Node 20 action runtimes. This changes CI tooling only; the served game build remains the verified implementation commit.
 - Confirmed the updated Node 24 action workflow passed GitHub run 44600648959; final public console had zero errors/warnings, rankings persisted and replay/home worked. This audit update is documentation-only and does not redeploy the game.
+
+## 2026-11-19 · Experience rejection and v2 proposal
+
+- MK rejected v1 handling, visuals, music/sound and lack of narrative motivation, and requested a comprehensive upgrade plan. Earlier functional verification is not an experience acceptance.
+- Reviewed the owning simulation, renderer/camera and audio source. Identified preset lateral/speed convergence, fixed drift presentation, per-frame camera damping, repeated lateral-shift bends and the absence of actual composed music.
+- Proposed Cloud Jet: Last Light: a storm courier delivering a beacon ignition core to guide waiting ships home, with a playable representative slice before expanding the route. Defined handling, shared geometry, art, music/mix, story payoff and experience acceptance work.
+- Updated README/MVP/competition/QA status to distinguish the live v1 prototype from the unimplemented v2 proposal. This task changes documentation only; no game code, assets, deployment or competition submission changed.
