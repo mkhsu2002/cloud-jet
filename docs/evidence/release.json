@@ -1,0 +1,41 @@
+{
+  "checkedDate": "2026-11-19",
+  "sourceCommit": "87f2e09a39dd0dcf6932dc12292b74483698bb6c",
+  "productionBranch": "main",
+  "deploymentId": "868c621f-c5a4-4287-82aa-842559779af3",
+  "productionUrl": "https://cloud-jet.pages.dev",
+  "deploymentUrl": "https://868c621f.cloud-jet.pages.dev",
+  "stage": {
+    "name": "deploy",
+    "started_on": null,
+    "ended_on": "2026-11-19T19:37:11.704883Z",
+    "status": "success"
+  },
+  "staticAssetChecks": [
+    {
+      "path": "/",
+      "sha256": "891b4f5abd9324045144ba5c97474691765838bff9d59cf42787bbb1014d74fb",
+      "matchesLocalBuild": true
+    },
+    {
+      "path": "/favicon.svg",
+      "sha256": "80b6183cc9df7199c20e123371b03fa730528896e87b6778eb280fcf7ce78d6c",
+      "matchesLocalBuild": true
+    },
+    {
+      "path": "/third-party/three-LICENSE.txt",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "matchesLocalBuild": true
+    },
+    {
+      "path": "/assets/index-DEma_ZiC.js",
+      "sha256": "c154fe022ea327f12ec457a4deb3e6389f62fdf5ba09a307c5d5173dd0716005",
+      "matchesLocalBuild": true
+    },
+    {
+      "path": "/assets/index-m0NpbMNc.css",
+      "sha256": "8524ae3cec29c344823f47f63d0877ceb60d5d1fe75d1d4b6d123ffb7acb69f6",
+      "matchesLocalBuild": true
+    }
+  ]
+}

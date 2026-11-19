@@ -47,3 +47,11 @@
 - Browser checks observed a keyboard practice finish at 11.983 s, a complete circuit at 46.217 s despite wall grazes, and an on-screen-button practice finish at 11.883 s with networking disabled after loading. Verified interrupted-attempt restart and inspected desktop/mobile layouts. Details and limits are in QA.md.
 - Added local offline operation, asset/license provenance, a Three.js notice, actual source/run instructions and path-filtered quality CI. Historical setup-only documents now point to current game/QA status.
 - Created the Cloudflare Pages project using an existing Keychain credential after discovering expired Wrangler OAuth. Deployment and live readback are a separate release checkpoint below.
+
+## 2026-11-19 · Public release
+
+- Pushed implementation commit `87f2e09a39dd0dcf6932dc12292b74483698bb6c` to main. GitHub quality run 44600042327 passed clean install, formatting, 14 tests and production build.
+- Published the static build to Cloudflare Pages: https://cloud-jet.pages.dev (deployment 868c621f-c5a4-4287-82aa-842559779af3). Official API readback confirms main, the implementation commit and successful deployment. Five public files match the local build byte-for-byte.
+- Verified the actual public game end-to-end: 41.850 s, five perfect corners, five boosts, zero wall grazes, visible saved local ranking. The perfect run is slightly below the original approximate session target; imperfect runs take longer.
+- Verified full-screen switching, landscape layout, interrupted-attempt restart and returning to a clean hangar. No competition submission or account terms acceptance occurred.
+- Updated the quality workflow to official checkout v7.0.1 and setup-node v7.1.0 (both Node 24 actions) after the first run reported deprecated Node 20 action runtimes. This changes CI tooling only; the served game build remains the verified implementation commit.

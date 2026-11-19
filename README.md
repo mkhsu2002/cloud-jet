@@ -6,7 +6,7 @@ A playable, browser-based hover-racing time trial by FlyPig. Fly above the cloud
 
 ## Play
 
-Open the game in a modern browser with WebGL 2 and hardware acceleration. The hosted demo URL is recorded in [release status](docs/QA.md). No login is required.
+**[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA.md) for verified checks and limitations.
 
 - **Skyline Circuit**: a 2,450 m course with five corners, countdown, finish timer and instant replay.
 - **First Flight**: a 650 m single-corner practice course.

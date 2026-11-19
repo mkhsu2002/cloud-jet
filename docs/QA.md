@@ -21,11 +21,12 @@ Used the authorized `codex-flypig-ai` browser lane. Focus emulation was used for
 | Full Skyline Circuit | Start/countdown, all five corners, results and saved ranking; 46.217 s, four perfect corners/four boosts, six wall grazes; mistakes did not prevent finishing |
 | On-screen pointer button, network disabled after loading | First Flight finished in 11.883 s, one perfect corner/boost, zero wall grazes; records saved |
 | Explicit blur during a race | Attempt interrupted; restart begins at 00:00.000 |
+| Full-screen toggle | Entered and exited full screen successfully |
 | Sound and low-effects buttons | Sound enabled/disabled; low-effects state and scenery changed successfully |
-| Responsive layout | No horizontal overflow at 1440 × 900 or 390 × 844; screenshots visually reviewed |
+| Responsive layout | No horizontal overflow at 1440 × 900, 390 × 844 or 844 × 390; screenshots visually reviewed |
 | Frame scheduling sample | 120 animation frames on the development machine at 1440 × 900: mean 16.63 ms, maximum 19.40 ms; a short sample, not a hardware guarantee |
 
-Screenshots: [home](evidence/home.png), [complete circuit](evidence/full-circuit-result.png). The browser console had no JavaScript errors at the initial inspected checkpoint; final hosted verification is recorded below after publication.
+Screenshots: [home](evidence/home.png), [complete circuit](evidence/full-circuit-result.png). The browser console had no JavaScript errors at the initial inspected checkpoint. The final hosted check is recorded below.
 
 ## JetBrains evidence
 
@@ -35,7 +36,11 @@ WebStorm 2026.3 performed two actual command-line inspections with the Default p
 
 Cloudflare Pages project `cloud-jet` was created through the official API with production branch `main`, using an existing Keychain credential. An expired Wrangler OAuth session was not used. No provider secret was written to the repository or browser application.
 
-Deployment is pending at this checkpoint. The intended production address is https://cloud-jet.pages.dev. Source commit, deployment identity, asset correspondence and live behavior must be recorded after actual deployment before this is marked released. This is a static application: there are no migrations, functions, runtime secrets, bindings or backend API contracts to synchronize.
+Published to https://cloud-jet.pages.dev from source commit `87f2e09a39dd0dcf6932dc12292b74483698bb6c`, already pushed to main with a passing GitHub quality run. The deployment is https://868c621f.cloud-jet.pages.dev. The official Cloudflare API readback reports the main branch, the same source commit and a successful deployment stage. All five served files (HTML, JavaScript, CSS, favicon and Three.js license) were byte-compared with the local production build and match; see [release evidence](evidence/release.json). A transient initial HTTP 403 immediately after publication cleared before the successful checks; browser and curl readbacks both returned the actual game/assets. This is a static application: there are no migrations, functions, runtime secrets, bindings or backend API contracts to synchronize.
+
+### Hosted gameplay readback
+
+On the public production URL, a [complete keyboard run](evidence/live-circuit-result.png) finished in **41.850 s**, with **5/5 perfect corners, five boosts and zero wall grazes**. The result was saved to that origin’s local ranking. This measured perfect run is slightly shorter than the original approximate 45–75 second design target; the earlier imperfect run took 46.217 s. No artificial time padding was added.
 
 ## Remaining competition / event validation
 
