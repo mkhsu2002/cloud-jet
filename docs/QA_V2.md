@@ -8,3 +8,12 @@ Checked 2026-11-19 (America/Vancouver).
 - The source and build are static. The v1 public deployment remains separately identifiable in QA.md for rollback.
 
 The full mission was played in Chrome with the keyboard. It finished in 42.492 seconds with five boosts, five perfect corners and zero rail contacts. Each release raised indicated speed from 158 to 225–226 km/h within the browser sample about 165 ms later. Observed the storm segment, lighthouse reveal, convoy and results in sequence. The score advanced to 49 seconds during the mission and arrival sequence. A person evaluating mix quality or handling preference remains distinct from these observed behaviors.
+
+## Release
+
+- Public URL https://cloud-jet.pages.dev/
+- Cloudflare deployment https://79874b77.cloud-jet.pages.dev/
+- Source `fa097610a3aee9158e218ce1a23ca92c3c459db4` on `main` and successful [GitHub quality run](https://github.com/mkhsu2002/cloud-jet/actions/runs/44605618446).
+- Cloudflare API confirmed the production commit and successful deployment. Public and local booth HTTP responses matched the build byte for byte for HTML, JavaScript, CSS and the score. The local server returns `audio/ogg`. The v1 deployment is still recorded in QA.md.
+- Repeated the full five-corner keyboard run on production. The built-in score loaded, the arrival scene showed the lighthouse and convoy together, and results recorded 42.708 seconds, five perfect corners, five boosts and zero rail contacts. Selecting replay immediately restarted the countdown. Browser console reported zero errors and warnings.
+- External playtesting, a listening review on the event sound system and a prolonged booth soak remain open.

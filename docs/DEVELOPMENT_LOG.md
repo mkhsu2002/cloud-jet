@@ -67,3 +67,5 @@
 ## 2026-11-19 · Last Light implementation
 
 MK approved the storm courier redesign. Rebuilt the flight around shared route geometry, continuous yaw and lateral motion, rail contact, immediate boost and a frame-time camera. Proved the harbor turn in Chrome before running the full mission. Authored procedural harbor and storm navigation scenery, a beacon delivery and convoy return, and a loopable original score with separate vehicle and cue layers. Current run and release evidence is in QA_V2.md.
+
+Published Last Light from implementation commit `fa09761` to Cloudflare Pages deployment `79874b77-6714-41c7-baec-ea36baddba83`. Read back the deployed commit and compared live and local build bytes for the page, bundles and original score. Finished the public mission in 42.708 seconds and verified the beacon/convoy ending, results and restart. The game's first public submission remains a separate action.
