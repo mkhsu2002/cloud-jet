@@ -335,7 +335,7 @@ export function lighthouse(group: THREE.Group) {
   panel(group, 0.42, 0.42, 0.42, 0, 39, 0, red);
 }
 
-export function fleetShip(group: THREE.Group) {
+export function fleetShip(group: THREE.Group, heavy = false) {
   hullSection(
     group,
     [
@@ -350,6 +350,12 @@ export function fleetShip(group: THREE.Group) {
   const tower = panel(group, 2.85, 1.44, 3.05, 0, 1.47, -1.02, ceramic);
   tower.rotation.x = 0.12;
   panel(group, 2.17, 0.54, 0.38, 0, 1.84, -2.58, glass);
+  if (heavy) {
+    for (const side of [-1, 1]) {
+      panel(group, 1.45, 1.6, 4.7, side * 1.6, 1.58, 1.5, warm);
+      panel(group, 1.5, 0.19, 0.42, side * 1.6, 2.47, 2.2, ceramic);
+    }
+  }
   for (const side of [-1, 1]) {
     const pod = new THREE.Group();
     pod.position.set(side * 2.9, 0, 1);

@@ -38,8 +38,8 @@
         </div>
         <h1>LAST<br /><em>LIGHT</em></h1>
         <p class="intro">
-          The storm took the beacon. The fleet is still out there.<br />Charge
-          the relays and guide the ships home.
+          The storm took the beacon. The fleet is still out there.<br />Bring as
+          many ships home as you can.
         </p>
         <div class="home-actions">
           <button class="primary" id="race">
@@ -65,14 +65,14 @@
           <kbd>↓</kbd>
           <div>
             <b>HOLD TO DRIFT</b>
-            <p>Press at the gold entry line. Hold through the bend.</p>
+            <p>Wait for HOLD NOW, then press and hold through the bend.</p>
           </div>
         </div>
         <div class="instruction">
           <kbd>↑</kbd>
           <div>
             <b>RELEASE TO BOOST</b>
-            <p>Follow the relay cue to rescue ships and boost.</p>
+            <p>Let go when RELEASE lights up to rescue ships and boost.</p>
           </div>
         </div>
         <p class="input-note">Use <kbd>SPACE</kbd> or the on-screen button.</p>
@@ -99,6 +99,13 @@
             ><span class="speed-unit">KM/H</span>
           </div>
           <div class="timing-guide">
+            <div id="relay-guide" class="relay-guide" hidden>
+              <p id="relay-brief" aria-live="polite"></p>
+              <div class="relay-checks">
+                <span id="relay-check-a" hidden></span>
+                <span id="relay-check-b" hidden></span>
+              </div>
+            </div>
             <div id="cue" class="cue">FIND THE GOLD LINE</div>
             <div class="energy-rail"><i id="energy"></i></div>
             <span class="label" id="energy-label">DRIFT ENERGY</span>
@@ -116,8 +123,10 @@
       <section id="arrival" class="arrival" hidden aria-live="polite">
         <strong id="arrival-stage">Core delivered</strong
         ><span id="arrival-line">Ignition sequence started.</span>
+        <button class="quiet" id="arrival-results" hidden>
+          View flight results
+        </button>
       </section>
-      <p id="radio" class="radio" hidden aria-live="polite"></p>
       <section id="results" class="modal" hidden aria-labelledby="result-title">
         <div class="result-card">
           <div class="eyebrow" id="result-eyebrow">BEACON ONLINE</div>
@@ -136,8 +145,9 @@
             </div>
           </div>
           <button id="again" class="primary">
-            Chase a better line <span>↗</span></button
+            Next pilot · flight briefing</button
           ><button id="back" class="quiet">Back to hangar</button>
+          <button id="replay-mission" class="quiet" hidden>Fly again</button>
           <a class="flight-comparison" id="other-flight" hidden
             >Try the other flight ↗</a
           >

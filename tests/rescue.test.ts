@@ -1,6 +1,11 @@
 import { expect, it } from "vitest";
 import { COURSE, PRACTICE, RESCUE, Simulation, STEP } from "../src/simulation";
-import { resolveRelay } from "../src/rescue";
+import {
+  approachCue,
+  relayChecks,
+  rescueCue,
+  resolveRelay,
+} from "../src/rescue";
 
 function reach(sim: Simulation, distance: number) {
   for (let step = 0; sim.state.distance < distance && step < 12000; step++) {
@@ -95,4 +100,57 @@ it("can release for one before the aircraft recenters at the lighthouse", () => 
   fly(sim, 1920, 2191);
   reach(sim, COURSE.length);
   expect(sim.state.rescues).toEqual([0, 0, 0, 0, 1]);
+});
+
+it.each([30, 60, 120])(
+  "guides a cue-following first rescue at %i fps",
+  (fps) => {
+    const sim = new Simulation(COURSE);
+    const entry = COURSE.corners[0].start - 20;
+    let actionTime = 0;
+    let pressed = false;
+    let released = false;
+    let prepared = false;
+
+    for (let frame = 0; frame < 12 * fps && !released; frame++) {
+      const now = frame / fps;
+      sim.advanceTo(now);
+      const { distance, speed, energy } = sim.state;
+
+      if (!pressed) {
+        const cue = approachCue(distance, entry, speed);
+        if (cue === "GET READY") prepared = true;
+        if (cue.startsWith("HOLD NOW")) {
+          sim.input(now + 0.15, true);
+          actionTime = now + 0.15;
+          pressed = true;
+        }
+      } else if (
+        now >= actionTime &&
+        rescueCue(0, distance, energy).startsWith("RELEASE")
+      ) {
+        sim.input(now + 0.15, false);
+        sim.advanceTo(now + 0.2);
+        released = true;
+      }
+    }
+    expect(prepared).toBe(true);
+    expect(sim.state.rescues[0]).toBe(1);
+  },
+);
+
+it("keeps visible bonus checks synchronized with the rescue decisions", () => {
+  const centered = { escorted: 3, entryQuality: 0.9, slip: 0.04, lateral: 1 };
+  expect(relayChecks(2, 0.93, centered).map(({ met }) => met)).toEqual([false]);
+  expect(relayChecks(2, 0.94, centered).map(({ met }) => met)).toEqual([true]);
+  expect(
+    relayChecks(3, 1, { ...centered, entryQuality: 0.6 }).map(({ met }) => met),
+  ).toEqual([true, false]);
+  const offset = { ...centered, lateral: 2 };
+  expect(relayChecks(4, 1, offset).map(({ met }) => met)).toEqual([
+    true,
+    false,
+  ]);
+  expect(rescueCue(4, 2230, 1, offset)).toContain("HOLD TO CENTER");
+  expect(rescueCue(4, 2230, 1, centered)).toContain("RELEASE FOR TWO NOW");
 });

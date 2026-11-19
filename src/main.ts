@@ -10,7 +10,13 @@ import {
 } from "./simulation";
 import { readRecords, saveRecord, compareRecords, type Store } from "./records";
 import { AudioEngine } from "./audio";
-import { rescueCue, rescuedTotal } from "./rescue";
+import {
+  approachCue,
+  relayBriefs,
+  relayChecks,
+  rescueCue,
+  rescuedTotal,
+} from "./rescue";
 const byId = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const params = new URLSearchParams(location.search);
@@ -50,7 +56,8 @@ function start(track = selected) {
   selected = track;
   arrivalAt = 0;
   byId("arrival").hidden = true;
-  byId("radio").hidden = true;
+  byId("arrival-results").hidden = true;
+  byId("relay-guide").hidden = true;
   if (!audio.enabled && !soundChosen) void toggleAudio(true);
   held = false;
   byId("drift").classList.remove("active");
@@ -84,7 +91,7 @@ function start(track = selected) {
 function home() {
   session.goHome();
   byId("arrival").hidden = true;
-  byId("radio").hidden = true;
+  byId("relay-guide").hidden = true;
   selected = rescue ? RESCUE : comparison ? PRACTICE : COURSE;
   held = false;
   world.setTrack(selected);
@@ -116,7 +123,9 @@ function input(down: boolean) {
 }
 byId("race").onclick = () => start(COURSE);
 byId("practice").onclick = () => start(PRACTICE);
-byId("again").onclick = () => start();
+byId("again").onclick = () => (selected === COURSE ? home() : start());
+byId("arrival-results").onclick = finish;
+byId("replay-mission").onclick = () => start(COURSE);
 byId("resume").onclick = () => start();
 byId("back").onclick = home;
 byId("pause-back").onclick = home;
@@ -197,6 +206,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) interrupt();
 });
 function finish() {
+  if (session.phase !== "finished" || !byId("results").hidden) return;
   const s = session.sim.state;
   const capacity = rescueCapacity(selected);
   const ships = rescuedTotal(s.rescues);
@@ -210,6 +220,11 @@ function finish() {
   const saved = !exhibition && saveRecord(store, selected.id, entry);
   byId("hud").hidden = true;
   byId("results").hidden = false;
+  byId("replay-mission").hidden = selected !== COURSE;
+  byId("back").hidden = selected === COURSE;
+  if (!exhibition)
+    byId("again").textContent =
+      selected === COURSE ? "Next pilot · flight briefing" : "Practice again";
   byId("result-time").textContent = formatTime(s.time);
   byId("result-eyebrow").textContent =
     selected === RESCUE
@@ -233,15 +248,17 @@ function finish() {
       : !saved
         ? "Finished! Local records could not be saved."
         : best === undefined
-          ? "Your first flight. Your next score to beat."
+          ? capacity
+            ? "First convoy record on this device."
+            : "First harbor time on this device."
           : compareRecords(entry, best) < 0
-            ? "NEW PERSONAL BEST"
+            ? "NEW DEVICE RECORD"
             : capacity
-              ? "Personal best: " +
+              ? "Device best · " +
                 (best.ships ?? 0) +
                 " ships · " +
                 formatTime(best.time)
-              : formatTime(best.time) + " is your best time.";
+              : formatTime(best.time) + " is the fastest time on this device.";
   byId("leaderboard-name").textContent = capacity
     ? "CONVOY RECORDS"
     : "FASTEST FLIGHTS";
@@ -287,7 +304,7 @@ function frame(now: number) {
       byId("arrival-line").textContent = "Ignition sequence started.";
       byId("arrival").hidden = false;
       byId("hud").hidden = true;
-      byId("radio").hidden = true;
+      byId("relay-guide").hidden = true;
       audio.chime("arrival");
     } else finish();
   }
@@ -303,6 +320,7 @@ function frame(now: number) {
       byId("arrival-stage").textContent !== "Beacon online"
     ) {
       byId("arrival-stage").textContent = "Beacon online";
+      byId("arrival-results").hidden = false;
       const ships = rescuedTotal(s.rescues);
       byId("arrival-line").textContent = s.rescues.length
         ? ships === 0
@@ -331,31 +349,62 @@ function frame(now: number) {
     byId("corner-label").textContent = next
       ? `${inCorner ? "" : "APPROACHING "}${next.name}`
       : "FINAL STRAIGHT";
-    let cue = next ? "FIND THE GOLD LINE" : "FLY IT HOME";
-    if (next && s.distance > next.start - 65 && !s.drifting)
-      cue = "PRESS AT THE GOLD LINE ↓";
-    if (s.drifting)
-      cue =
-        next && s.distance > next.end - 45
+    let cue = "FLY IT HOME";
+    if (next)
+      cue = s.drifting
+        ? s.distance > next.end - 45
           ? "RELEASE AT THE EXIT ↑"
-          : "HOLD YOUR LINE";
+          : "HOLD YOUR LINE"
+        : approachCue(s.distance, next.start - 20, s.speed);
+    const guide = byId("relay-guide");
+    let showGuide = false;
     if (s.rescues.length) {
       const relay = s.rescues.indexOf(null);
+      const escorted = rescuedTotal(s.rescues);
       byId("rescued-live").textContent =
-        rescuedTotal(s.rescues) +
-        " / " +
-        rescueCapacity(selected) +
-        " SHIPS GUIDED HOME";
-      if (relay < 0) cue = "FLY IT HOME";
+        `${escorted} / ${rescueCapacity(selected)} SHIPS GUIDED HOME`;
+      const turn = selected.corners[relay];
+      const approach = {
+        escorted,
+        entryQuality: s.drifting ? s.entryQuality : 0,
+        slip: s.slip,
+        lateral: s.lateral,
+      };
+      if (!turn) cue = s.drifting ? "LET GO · FLY IT HOME" : "FLY IT HOME";
+      else if (s.drifting && s.distance < turn.start - 110)
+        cue = "LET GO · NEXT TURN AHEAD";
       else if (s.drifting)
-        cue = rescueCue(relay, s.distance, s.energy, {
-          escorted: rescuedTotal(s.rescues),
-          entryQuality: s.entryQuality,
-          slip: s.slip,
-          lateral: s.lateral,
-        });
+        cue = rescueCue(relay, s.distance, s.energy, approach);
+      else cue = approachCue(s.distance, turn.start - 20, s.speed);
+
+      if (turn && (relay === 0 || s.distance >= turn.start - 130)) {
+        showGuide = true;
+        const brief = byId("relay-brief");
+        if (brief.textContent !== relayBriefs[relay])
+          brief.textContent = relayBriefs[relay];
+        const checks = relayChecks(relay, s.energy, approach);
+        for (const [index, id] of [
+          "relay-check-a",
+          "relay-check-b",
+        ].entries()) {
+          const item = byId(id);
+          const check = checks[index];
+          item.hidden = !check;
+          if (check) {
+            const label = `${check.met ? "✓" : "○"} ${check.label}`;
+            if (item.textContent !== label) item.textContent = label;
+            item.dataset.met = String(check.met);
+          }
+        }
+      }
     } else if (s.boostRemaining > 0) cue = comparison ? "" : "BOOSTING ↗";
-    byId("cue").textContent = cue;
+    guide.hidden = !showGuide;
+    const cueElement = byId("cue");
+    if (cueElement.textContent !== cue) cueElement.textContent = cue;
+    cueElement.classList.toggle(
+      "action",
+      cue.startsWith("HOLD NOW") || cue.startsWith("RELEASE"),
+    );
     byId("energy").style.width = `${s.energy * 100}%`;
     byId("energy-label").textContent = s.rescues.length
       ? "RELAY CHARGE"
@@ -363,7 +412,7 @@ function frame(now: number) {
         ? "EXIT SPEED"
         : "DRIFT ENERGY";
     byId("feedback").textContent =
-      s.time - s.feedbackAt < 1.3 &&
+      s.time - s.feedbackAt < (s.feedback.includes("RESCUED") ? 2.4 : 1.3) &&
       !(comparison && s.feedback.includes("BOOST"))
         ? s.feedback
         : "";
@@ -377,22 +426,6 @@ function frame(now: number) {
       lastFeedback = s.feedbackAt;
     }
   }
-  if (selected === COURSE && phase === "racing") {
-    const radio =
-      s.distance < 120
-        ? "HARBOR CONTROL · Core secured. The fleet is waiting."
-        : s.distance >= 560 && s.distance < 700
-          ? "HARBOR CONTROL · Entering the storm channel."
-          : s.distance >= 1020 && s.distance < 1120
-            ? "CLOUD BREAK · Charge fully to guide the heavy hauler."
-            : s.distance >= 1460 && s.distance < 1550
-              ? "BEACON APPROACH · Bring three escorts and hit a clean entry to guide the pair."
-              : s.distance >= 1960 && s.distance < 2070
-                ? "LIGHTHOUSE · Keep holding until the craft levels out for the final pair."
-                : "";
-    if (byId("radio").textContent !== radio) byId("radio").textContent = radio;
-    byId("radio").hidden = !radio;
-  } else byId("radio").hidden = true;
   audio.update(s.speed, s.drifting, s.boostRemaining > 0, phase === "racing");
   try {
     world.render(s, active, now / 1000);

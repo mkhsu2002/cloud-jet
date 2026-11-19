@@ -2,6 +2,7 @@ import { curvature } from "./track";
 import {
   RELAYS,
   resolveRelay,
+  rescueFeedback,
   rescuedTotal,
   type RescueOutcome,
 } from "./rescue";
@@ -183,13 +184,7 @@ export class Simulation {
             lateral: s.lateral,
           });
           s.rescues[relay] = outcome;
-          this.message(
-            outcome === 0
-              ? "RELAY MISSED"
-              : outcome === 1
-                ? "1 SHIP RESCUED"
-                : "2 SHIPS RESCUED",
-          );
+          this.message(rescueFeedback(relay, outcome));
         } else {
           this.message(
             release > 0.82

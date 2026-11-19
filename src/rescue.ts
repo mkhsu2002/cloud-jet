@@ -34,23 +34,62 @@ export function rescuedTotal(relays: readonly RescueOutcome[]) {
   return relays.reduce<number>((count, outcome) => count + (outcome ?? 0), 0);
 }
 
-function eligibleBonus(
-  window: RescueWindow,
-  charge: number,
-  approach: Approach,
-) {
-  switch (window.bonus) {
+const haulerCharge = 0.94;
+const escortCount = 3;
+const cleanEntry = 0.78;
+const maxSlip = 0.24;
+const maxOffset = 1.55;
+
+export function relayChecks(relay: number, charge: number, approach: Approach) {
+  switch (RELAYS[relay]?.[0].bonus) {
     case "heavy":
-      return charge >= 0.94;
+      return [{ label: "Hauler charge", met: charge >= haulerCharge }];
     case "escort":
-      return approach.escorted >= 3 && approach.entryQuality >= 0.78;
+      return [
+        {
+          label: `Escort ${Math.min(approach.escorted, escortCount)}/${escortCount}`,
+          met: approach.escorted >= escortCount,
+        },
+        { label: "Clean entry", met: approach.entryQuality >= cleanEntry },
+      ];
     case "alignment":
-      return (
-        Math.abs(approach.slip) <= 0.24 && Math.abs(approach.lateral) <= 1.55
-      );
+      return [
+        { label: "Nose straight", met: Math.abs(approach.slip) <= maxSlip },
+        {
+          label: "On centerline",
+          met: Math.abs(approach.lateral) <= maxOffset,
+        },
+      ];
     default:
-      return true;
+      return [];
   }
+}
+
+export const relayBriefs = [
+  "Hold through the bend. Let go when RELEASE lights up.",
+  "Take one ship now, or hold for the pair.",
+  "Fill the charge bar to bring the heavy hauler.",
+  "Bring three ships and press on cue to escort the pair.",
+  "Hold for the pair until the nose is straight and the ship is centered.",
+];
+
+export function approachCue(distance: number, entry: number, speed: number) {
+  if (distance < entry - 45) return "FIND THE GOLD LINE";
+  if (distance < entry - speed * 0.17) return "GET READY";
+  if (distance <= entry + speed * 0.2) return "HOLD NOW ↓";
+  return "HOLD TO SALVAGE THIS TURN ↓";
+}
+
+const pairFeedback = [
+  "2 SHIPS RESCUED",
+  "2 SHIPS RESCUED",
+  "2 RESCUED · HAULER CHARGED",
+  "2 RESCUED · ESCORT AND CLEAN ENTRY",
+  "2 RESCUED · STRAIGHT AND CENTERED",
+];
+export function rescueFeedback(relay: number, outcome: RescueOutcome) {
+  if (outcome === 2) return pairFeedback[relay];
+  return outcome === 1 ? "1 SHIP RESCUED" : "RELAY MISSED";
 }
 
 export function resolveRelay(
@@ -66,7 +105,9 @@ export function resolveRelay(
       charge >= window.charge,
   );
   if (!match) return 0;
-  return eligibleBonus(match, charge, approach) ? match.ships : 1;
+  return relayChecks(relay, charge, approach).every(({ met }) => met)
+    ? match.ships
+    : 1;
 }
 
 export function rescueCue(
@@ -80,17 +121,20 @@ export function rescueCue(
   const next = windows.find((window) => distance <= window.to);
   if (!next) return "WINDOW CLOSED";
   if (distance < next.from) {
-    if (next.bonus === "heavy" && charge < 0.94)
+    if (next.bonus === "heavy" && charge < haulerCharge)
       return "BUILD FULL CHARGE FOR THE HAULER";
     return next === windows[1] ? "HOLD FOR TWO SHIPS" : "CHARGE THE RELAY";
   }
   if (charge < next.charge) return "KEEP CHARGING";
   if (next === windows[0] && windows.length === 2)
     return "RELEASE FOR ONE · OR HOLD FOR TWO";
-  if (next.bonus && !eligibleBonus(next, charge, approach)) {
-    if (next.bonus === "heavy") return "RELEASE FOR ONE · CHARGE MORE FOR TWO";
-    if (next.bonus === "alignment") return "RELEASE FOR ONE · HOLD UNTIL LEVEL";
-    return "RELEASE FOR ONE · ESCORT UNAVAILABLE";
+  if (
+    next.bonus &&
+    !relayChecks(relay, charge, approach).every(({ met }) => met)
+  ) {
+    if (next.bonus === "heavy") return "RELEASE FOR ONE · HOLD TO CHARGE";
+    if (next.bonus === "alignment") return "RELEASE FOR ONE · HOLD TO CENTER";
+    return "RELEASE FOR ONE NOW ↑";
   }
   return next.ships === 2 ? "RELEASE FOR TWO NOW ↑" : "RELEASE FOR ONE NOW ↑";
 }

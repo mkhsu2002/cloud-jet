@@ -323,8 +323,9 @@ export class World {
           );
           for (let formation = 0; formation < window.ships; formation++) {
             const group = new THREE.Group();
-            fleetShip(group);
-            group.scale.setScalar(formation ? 0.84 : 0.95);
+            const heavy = window.bonus === "heavy" && formation === 1;
+            fleetShip(group, heavy);
+            group.scale.setScalar(heavy ? 1.25 : formation ? 0.84 : 0.95);
             this.courseGroup.add(group);
             this.rescueFleet.push({ group, relay, window: index, formation });
           }

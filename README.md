@@ -14,8 +14,9 @@ The v2 mission replaces the original time-trial prototype. See the [v2 redesign]
 - **Two rescue turns**: an unranked introduction. Charge the harbor relay for one ship, then release early in the storm to guide one ship or hold for the later pair.
 - **Harbor Shakedown**: a 920 m single-corner practice course.
 - **Compare harbor flights**: two playable views of the same harbor turn with the speed display and boost text hidden. Comparison flights have their own replay flow and do not write the local leaderboard.
-- Press **Space** at the gold entry line, hold through the bend, release on the relay cue. In harbor practice, release at the cyan exit line. The on-screen button supports the same mouse/touch hold-and-release action.
+- Wait for **HOLD NOW**, press and hold **Space**, and release on the highlighted relay cue. In harbor practice, release on the exit cue. The on-screen button supports the same mouse and touch action.
 - Entry timing changes the racing line and energy buildup; release timing changes exit acceleration. Poor lines can graze the wall and slow you down.
+- On the mission results, choose **Next pilot · flight briefing** or press Space to hand over. The next pilot starts with zero ships, and the device keeps its records.
 - Convoy records rank by ships guided home, then by fastest delivery. This browser stores records per course version. Harbor practice keeps its own time records.
 - The first flight enables sound after an interaction. Use Sound to toggle it. Low effects reduces scenery and camera effects; reduced-motion preference enables it automatically.
 - Leaving the window or suspending the tab interrupts the attempt. Start a fresh flight to set a time.
