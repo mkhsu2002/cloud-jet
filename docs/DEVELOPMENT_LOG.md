@@ -73,3 +73,9 @@ Published Last Light from implementation commit `fa09761` to Cloudflare Pages de
 ## 2026-11-19 · Flight art and arrival pass
 
 Rebuilt the courier, harbor, storm channel and lighthouse art for the active flight camera. Added textured decking, closer scenery, longer boost plumes, a nearer chase camera and a gradual arrival reveal with an illuminated lens, sequential runway lights and moving convoy. Captured matched in-game before/after frames for entry, exit and arrival. The art pass preserves course geometry, balancing and ranking IDs. Details are in QA_V2.md.
+
+## 2026-11-19 · Boost timing and booth comparison
+
+Codex remained the primary implementation tool. WebStorm 2026.3 (WS-263.7307.202) ran its Default inspection over the final project, including `src/boost-presentation.ts`, `src/simulation.ts`, `src/world.ts` and `tests/boost-presentation.test.ts`. Inspected the source paths that determine drift release, boost confirmation and camera recovery. The inspection exited successfully. The 15-test Vitest suite ran separately in the shell, including the release-to-camera regression. This is real IDE inspection use and separate terminal testing.
+
+Verified the current Devpost Category 3 rules and Submission Specifics. Added paired harbor flights with a shared simulation, hidden velocity and boost text, and no leaderboard writes. Played both before applying the revised presentation to the full mission verification. The local production mission completed in 42.700 seconds, with five boosts, zero rail contacts and the beacon ending. See QA_V2.md for release and booth checks.

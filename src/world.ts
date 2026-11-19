@@ -1,3 +1,4 @@
+import { boostShot } from "./boost-presentation";
 import * as THREE from "three";
 import { COURSE, type RaceState, type Track } from "./simulation";
 import { sampleTrack, curvature } from "./track";
@@ -49,6 +50,20 @@ export class World {
     material: THREE.ShaderMaterial;
   }[] = [];
   private pitchVelocity = 0;
+  private ignitionAt = -10;
+  private seenBoosts = 0;
+  private classic = false;
+  private roadFlow = new THREE.Group();
+  setClassicBoost(classic: boolean) {
+    this.classic = classic;
+    this.resetBoost();
+  }
+  private resetBoost() {
+    this.ignitionAt = -10;
+    this.seenBoosts = 0;
+    this.pitchVelocity = 0;
+    this.lastDistance = -1;
+  }
   private storm = 0;
   private arrivalTime = 0;
   private approachLamps = new THREE.Group();
@@ -189,6 +204,7 @@ export class World {
     this.beacon.clear();
     this.convoy.clear();
     this.skyline.clear();
+    this.roadFlow.clear();
     this.approachLamps.clear();
     this.intensity = 0;
     const uv: number[] = [];
@@ -274,6 +290,24 @@ export class World {
       this.gold,
     );
     this.buildRouteScenery(track);
+    this.courseGroup.add(this.roadFlow);
+    const light = new THREE.MeshBasicMaterial({ color: 0x8faebb });
+    const marker = new THREE.BoxGeometry(0.24, 0.06, 1.7);
+    const countMarkers = Math.ceil(track.length / 7);
+    const roadTicks = new THREE.InstancedMesh(marker, light, countMarkers * 2);
+    roadTicks.userData.disposeMaterial = true;
+    const markerPose = new THREE.Object3D();
+    for (let i = 0; i < countMarkers; i++) {
+      const distance = i * 7;
+      for (const [j, side] of [-1, 1].entries()) {
+        markerPose.position.copy(offset(distance, side * 5.75, track));
+        markerPose.position.y += 0.065;
+        markerPose.rotation.y = -sampleTrack(track, distance).heading;
+        markerPose.updateMatrix();
+        roadTicks.setMatrixAt(i * 2 + j, markerPose.matrix);
+      }
+    }
+    this.roadFlow.add(roadTicks);
   }
   private gate(d: number, label: string, mat: THREE.Material) {
     const group = new THREE.Group();
@@ -584,6 +618,18 @@ export class World {
     const elapsed = Math.min(0.08, Math.max(0, time - this.previousTime));
     this.previousTime = time;
     const delivered = s.finished && this.track === COURSE;
+    if (s.boosts < this.seenBoosts) this.resetBoost();
+    if (s.boosts > this.seenBoosts) {
+      this.ignitionAt = s.time;
+      this.seenBoosts = s.boosts;
+    }
+    const shot = boostShot(
+      s.time - this.ignitionAt,
+      s.thrust,
+      this.low || this.classic,
+    );
+    this.roadFlow.visible = !this.classic;
+
     this.arrivalTime = delivered ? this.arrivalTime + elapsed : 0;
     this.intensity = THREE.MathUtils.smoothstep(this.arrivalTime, 0.3, 1.32);
     this.beaconCore.color.set(0x3d4d59).lerp(this.beaconWarm, this.intensity);
@@ -644,7 +690,7 @@ export class World {
       trail.mount.visible = active && !delivered;
       trail.mount.scale.set(
         0.6 + this.pitchVelocity * 0.63,
-        1.55 + this.pitchVelocity * 9.5,
+        1.55 + this.pitchVelocity * 9.5 + shot.kick * 3.2,
         1,
       );
       trail.material.uniforms.drive.value = this.pitchVelocity;
@@ -666,7 +712,9 @@ export class World {
       (delivered
         ? 28 + reveal * 36
         : active
-          ? 11.8 + this.pitchVelocity * 7.2
+          ? this.classic
+            ? 11.8 + this.pitchVelocity * 7.2
+            : 11.8
           : 19);
     const side = delivered ? -17 - reveal * 15 : active ? s.lateral * 0.7 : -14;
     const height = delivered ? 11 + reveal * 19 : active ? 4.25 : 7;
@@ -687,16 +735,41 @@ export class World {
       this.camera.position.lerp(cam, 1 - Math.exp(-elapsed * 7));
       this.look.lerp(target, 1 - Math.exp(-elapsed * 8));
     }
+    // Apply the short inertial offset after the normal chase smoothing.
+    // It decays independently of sustained boost and does not flood the FOV.
+    const chasePosition = this.camera.position.clone();
+    if (active && !delivered && shot.lag > 0) {
+      this.camera.position.addScaledVector(dir, -shot.lag);
+      this.camera.position.y -= shot.kick * 0.32;
+    }
     this.camera.lookAt(this.look);
+    if (active && !delivered) this.camera.rotateX(shot.pitch);
     if (!this.low && active && !delivered)
       this.camera.rotateZ(bank * 0.35 - s.slip * 0.12);
     this.sky?.position.copy(this.camera.position);
     const targetFov =
-      (delivered ? 59 : 57) + (this.low ? 0 : this.pitchVelocity * 19);
+      (delivered ? 59 : 57) +
+      (this.low
+        ? 0
+        : this.classic
+          ? this.pitchVelocity * 19
+          : this.pitchVelocity * 2);
     this.camera.fov +=
       (targetFov - this.camera.fov) * (1 - Math.exp(-elapsed * 5));
+    const chaseFov = this.camera.fov;
+    if (active && !delivered && shot.lag > 0) {
+      this.camera.fov = THREE.MathUtils.radToDeg(
+        2 *
+          Math.atan(
+            (Math.tan(THREE.MathUtils.degToRad(chaseFov * 0.5)) * 11.8) /
+              (11.8 + shot.lag),
+          ),
+      );
+    }
     this.camera.updateProjectionMatrix();
     this.renderer.render(this.scene, this.camera);
+    this.camera.fov = chaseFov;
+    this.camera.position.copy(chasePosition);
     this.lastDistance = d;
   }
 }

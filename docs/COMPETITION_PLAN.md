@@ -30,10 +30,12 @@ The five equally weighted judging criteria are technological implementation, des
 
 Open verification items:
 
-- The current [Submission Specifics page](https://cloud9.devpost.com/details/submission-specifics) returned HTTP 403 during this check. Recheck it before scope freeze and submission; do not treat this document as a complete substitute.
+- The [current Submission Specifics](https://cloud9.devpost.com/details/submission-specifics) were read successfully on 2026-11-19 after the earlier HTTP 403. Category 3 calls for a complete start-to-score loop, short sessions ideally under three minutes, simple controls, clean resets, and sustained responsiveness. Rider is recommended. WebStorm with other tools is allowed. A separate-monitor local leaderboard is an optional enhancement. The current pages specify no fixed engine, rendering style or asset-size limit.
 - Search results contain previous-edition pages with Category 4 and old dates. Use the current live rules, not cached prior-edition requirements.
 - MK must confirm individual/team eligibility, representative details and registration status. Neither residence nor eligibility is inferred from machine timezone. Any binding submission/terms acceptance requires MK's final action.
 - Recheck rules and submission fields before submitting; record material changes rather than silently changing the verification date.
+
+The event build is intended to be a free public walkthrough experience with no install or sign-in, plus the same assets served locally for a booth. Treat award and adoption as separate organizer decisions. Before entry, rehearse on the intended booth machine with new players, multiple consecutive runs, reset, sound and the local server with internet disconnected. Prepare public open-source code and run instructions, a free working demo through February 3, 2027 at 15:00 Pacific, a public YouTube gameplay video under three minutes and the English methodology and tooling explanation. Deadline is January 12, 2027 at 11:00 Pacific.
 
 ## Alternatives and scope decision
 

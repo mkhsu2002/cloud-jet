@@ -6,6 +6,8 @@ Updated: 2026-11-19. Applies to the browser implementation introduced in this sp
 
 Use a modern desktop browser with WebGL 2 and hardware acceleration. Open the hosted game or run the bundled build locally. Start with a keyboard and a 1080p display; use the full-screen button after opening the page. Harbor Shakedown is a single-corner practice run. Last Light has five corners and ends with a short sequence showing the core delivery, beacon ignition and convoy departure. Press Space during the arrival scene to go straight to results.
 
+Launch the mission from the normal home address for ranked booth play. The optional harbor comparison runs the same practice track with both speed displays hidden and excludes those attempts from rankings.
+
 Controls: press and hold Space at the gold entry line, keep holding through the corner, release at the cyan exit line. The circular on-screen button offers the same hold/release interaction for a mouse or touch input. Mistakes slow the flight and never eliminate the player. Restart is available at any time. Focus loss or a suspended tab ends that attempt; choose a fresh flight to rank.
 
 Audio is enabled on the first flight after a user gesture. Use Sound to mute it. The score is included in the local build. Low effects removes scenery, lowers resolution and removes boost camera widening; reduced-motion preference enables it by default. Reduced effects does not change race simulation.

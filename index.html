@@ -48,6 +48,9 @@
             Practice the harbor turn <span>→</span>
           </button>
         </div>
+        <a class="flight-comparison" id="comparison-link" href="?flight=A"
+          >Compare harbor flights ↗</a
+        >
         <div class="course-summary">
           <span><b>BEACON DELIVERY</b></span
           ><span>5 CORNERS</span><span>ONE BUTTON</span>
@@ -87,7 +90,7 @@
         <div id="countdown" class="countdown" aria-live="assertive"></div>
         <div class="feedback" id="feedback" aria-live="polite"></div>
         <div class="race-bottom">
-          <div class="speed-block">
+          <div class="speed-block" id="speed-block">
             <span class="label">VELOCITY</span><strong id="speed">0</strong
             ><span class="speed-unit">KM/H</span>
           </div>
@@ -129,7 +132,10 @@
           <button id="again" class="primary">
             Chase a better line <span>↗</span></button
           ><button id="back" class="quiet">Back to hangar</button>
-          <div class="leaderboard">
+          <a class="flight-comparison" id="other-flight" hidden
+            >Try the other flight ↗</a
+          >
+          <div class="leaderboard" id="leaderboard">
             <h3>FASTEST FLIGHTS <span>ON THIS DEVICE</span></h3>
             <ol id="records"></ol>
           </div>

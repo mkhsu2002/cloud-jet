@@ -6,6 +6,10 @@ import { readRecords, saveRecord, type Store } from "./records";
 import { AudioEngine } from "./audio";
 const byId = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
+const requestedFlight = new URLSearchParams(location.search).get("flight");
+const comparison = requestedFlight === "A" || requestedFlight === "B";
+const classic = requestedFlight === "A";
+let lastBoostCount = 0;
 const session = new Session(),
   audio = new AudioEngine();
 let world: World;
@@ -30,6 +34,7 @@ function setLow(value: boolean) {
   byId("effects").setAttribute("aria-pressed", String(low));
 }
 function start(track = selected) {
+  if (comparison) track = PRACTICE;
   if (session.phase === "racing" || session.phase === "countdown") return;
   selected = track;
   arrivalAt = 0;
@@ -41,6 +46,7 @@ function start(track = selected) {
   session.start(track, performance.now());
   world.setTrack(track);
   lastFeedback = -10;
+  lastBoostCount = 0;
   byId("home").hidden = true;
   byId("home-instructions").hidden = true;
   byId("footer").hidden = true;
@@ -55,9 +61,9 @@ function home() {
   session.goHome();
   byId("arrival").hidden = true;
   byId("radio").hidden = true;
-  selected = COURSE;
+  selected = comparison ? PRACTICE : COURSE;
   held = false;
-  world.setTrack(COURSE);
+  world.setTrack(selected);
   byId("hud").hidden = true;
   byId("results").hidden = true;
   byId("paused").hidden = true;
@@ -65,7 +71,7 @@ function home() {
   byId("home-instructions").hidden = false;
   byId("footer").hidden = false;
   document.body.classList.remove("racing");
-  byId("race").focus();
+  byId(comparison ? "practice" : "race").focus();
 }
 function interrupt() {
   session.interrupt();
@@ -168,13 +174,15 @@ document.addEventListener("visibilitychange", () => {
 });
 function finish() {
   const s = session.sim.state;
-  const records = readRecords(store, selected.id);
+  const records = comparison ? [] : readRecords(store, selected.id);
   const best = records[0]?.time;
-  const saved = saveRecord(store, selected.id, {
-    time: s.time,
-    perfects: s.perfects,
-    date: new Date().toISOString().slice(0, 10),
-  });
+  const saved =
+    !comparison &&
+    saveRecord(store, selected.id, {
+      time: s.time,
+      perfects: s.perfects,
+      date: new Date().toISOString().slice(0, 10),
+    });
   byId("hud").hidden = true;
   byId("results").hidden = false;
   byId("result-time").textContent = formatTime(s.time);
@@ -185,13 +193,15 @@ function finish() {
       ? "Ready for the real flight."
       : "The fleet has a way home.";
   byId("arrival").hidden = true;
-  byId("personal-best").textContent = !saved
-    ? "Finished! Local records could not be saved."
-    : best === undefined
-      ? "Your first flight. Your next time to beat."
-      : s.time < best
-        ? "NEW PERSONAL BEST"
-        : `${(s.time - best).toFixed(3)}s from your best. One more flight?`;
+  byId("personal-best").textContent = comparison
+    ? "Try the other flight through the same turn."
+    : !saved
+      ? "Finished! Local records could not be saved."
+      : best === undefined
+        ? "Your first flight. Your next time to beat."
+        : s.time < best
+          ? "NEW PERSONAL BEST"
+          : `${(s.time - best).toFixed(3)}s from your best. One more flight?`;
   byId("result-perfect").textContent =
     `${s.perfects}/${selected.corners.length}`;
   byId("result-boost").textContent = String(s.boosts);
@@ -275,15 +285,22 @@ function frame(now: number) {
         next && s.distance > next.end - 45
           ? "RELEASE AT THE EXIT ↑"
           : "HOLD YOUR LINE";
-    if (s.boostRemaining > 0) cue = "BOOSTING ↗";
+    if (s.boostRemaining > 0) cue = comparison ? "" : "BOOSTING ↗";
     byId("cue").textContent = cue;
     byId("energy").style.width = `${s.energy * 100}%`;
     byId("energy-label").textContent =
       s.boostRemaining > 0 ? "EXIT SPEED" : "DRIFT ENERGY";
     byId("feedback").textContent =
-      s.time - s.feedbackAt < 1.3 ? s.feedback : "";
+      s.time - s.feedbackAt < 1.3 &&
+      !(comparison && s.feedback.includes("BOOST"))
+        ? s.feedback
+        : "";
+    if (s.boosts > lastBoostCount) {
+      if (classic) audio.chime("boost");
+      else audio.ignition(s.thrust);
+      lastBoostCount = s.boosts;
+    }
     if (s.feedbackAt !== lastFeedback) {
-      if (s.feedback.includes("BOOST")) audio.chime("boost");
       if (s.feedback === "RAIL CONTACT") audio.chime("contact");
       lastFeedback = s.feedbackAt;
     }
@@ -315,6 +332,28 @@ function frame(now: number) {
 }
 try {
   world = new World(byId<HTMLCanvasElement>("world"));
+  world.setClassicBoost(classic);
+  if (comparison) {
+    selected = PRACTICE;
+    world.setTrack(PRACTICE);
+    byId("race").hidden = true;
+    byId("speed-block").hidden = true;
+    byId("leaderboard").hidden = true;
+    byId("energy-label").hidden = true;
+    byId("other-flight").hidden = false;
+    byId<HTMLAnchorElement>("other-flight").href = classic
+      ? "?flight=B"
+      : "?flight=A";
+    byId<HTMLAnchorElement>("comparison-link").href = "./";
+    byId("comparison-link").textContent = "Back to the mission ↗";
+    byId("practice").textContent = "Launch flight " + requestedFlight;
+    byId("again").textContent = "Replay flight " + requestedFlight;
+    const title = document.querySelector("#home h1")!;
+    title.textContent = "Flight " + requestedFlight;
+    document.querySelector("#home .intro")!.textContent =
+      "Fly the harbor turn. Hold to drift and release at the exit.";
+    document.querySelector<HTMLElement>("#home .course-summary")!.hidden = true;
+  }
   setLow(low);
   byId("world").addEventListener("webglcontextlost", (e) => {
     e.preventDefault();

@@ -12,6 +12,7 @@ The v2 mission replaces the original time-trial prototype. See the [v2 redesign]
 
 - **Last Light**: a 2,450 m mission with five corners, three route beats and a beacon arrival scene.
 - **Harbor Shakedown**: a 920 m single-corner practice course.
+- **Compare harbor flights**: two playable views of the same harbor turn with the speed display and boost text hidden. Comparison flights have their own replay flow and do not write the local leaderboard.
 - Press **Space** at the gold entry line, hold through the bend, release at the cyan exit line. The on-screen button supports the same mouse/touch hold-and-release action.
 - Entry timing changes the racing line and energy buildup; release timing changes exit acceleration. Poor lines can graze the wall and slow you down.
 - Rankings are saved on this browser/device, separately for each course version. They are informal local records, not a trusted global leaderboard.

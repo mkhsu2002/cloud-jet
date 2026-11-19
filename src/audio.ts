@@ -87,6 +87,25 @@ export class AudioEngine {
     this.musicGain!.gain.setTargetAtTime(active ? 0.58 : 0.43, t, 0.23);
   }
 
+  ignition(strength: number) {
+    if (!this.ctx || !this.effects || !this.enabled) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    const voice = ctx.createOscillator();
+    const level = ctx.createGain();
+    const power = Math.max(0.12, Math.min(1, strength));
+    voice.type = "triangle";
+    voice.frequency.setValueAtTime(82, now);
+    voice.frequency.exponentialRampToValueAtTime(116, now + 0.1);
+    voice.frequency.exponentialRampToValueAtTime(56, now + 0.34);
+    level.gain.setValueAtTime(0, now);
+    level.gain.linearRampToValueAtTime(0.28 * power, now + 0.035);
+    level.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+    voice.connect(level).connect(this.effects);
+    voice.start(now);
+    voice.stop(now + 0.45);
+  }
+
   chime(kind: "boost" | "contact" | "arrival") {
     if (!this.ctx || !this.effects || !this.enabled) return;
     const ctx = this.ctx,
