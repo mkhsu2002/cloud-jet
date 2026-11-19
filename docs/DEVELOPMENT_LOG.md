@@ -79,3 +79,9 @@ Rebuilt the courier, harbor, storm channel and lighthouse art for the active fli
 Codex remained the primary implementation tool. WebStorm 2026.3 (WS-263.7307.202) ran its Default inspection over the final project, including `src/boost-presentation.ts`, `src/simulation.ts`, `src/world.ts` and `tests/boost-presentation.test.ts`. Inspected the source paths that determine drift release, boost confirmation and camera recovery. The inspection exited successfully. The 15-test Vitest suite ran separately in the shell, including the release-to-camera regression. This is real IDE inspection use and separate terminal testing.
 
 Verified the current Devpost Category 3 rules and Submission Specifics. Added paired harbor flights with a shared simulation, hidden velocity and boost text, and no leaderboard writes. Played both before applying the revised presentation to the full mission verification. The local production mission completed in 42.700 seconds, with five boosts, zero rail contacts and the beacon ending. See QA_V2.md for release and booth checks.
+
+## 2026-11-19 · Competition readiness review
+
+MK rejected the current arcade time trial as too conventional for the competition. Rechecked the live rules and Submission Specifics. They require genuine use of an eligible JetBrains tool alongside any other editor or coding assistant, and judge the depth of that use. The prior WebStorm CLI inspection is documented as static analysis. IDE debugging, in-IDE test execution, trial activation and eligibility approval have not been verified.
+
+Opened the native WebStorm application to run the existing Vitest regressions in the IDE. The first-launch WebStorm User Agreement appeared and blocks entry to the project. Left the agreement on screen for MK to review. No agreement was accepted, and no interactive test or debugger session ran.

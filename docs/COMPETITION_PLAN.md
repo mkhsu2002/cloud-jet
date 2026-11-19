@@ -15,6 +15,14 @@ Pursue the optional AI-Powered Workflow Story only using evidence collected duri
 
 Planning basis: MK plus Codex, a desktop-browser-first game, and no backend for the MVP. Updated on 2026-11-19 at MK’s direction: replace the previous multi-week delivery proposal with a two-day focused sprint. The earlier November-to-January implementation schedule is superseded. Completion remains subject to actual validation.
 
+## November 19 design review
+
+MK rejected the existing time trial as too conventional. The deployed build and harbor comparison remain development evidence. The next design proposal makes saving the convoy a player-controlled outcome.
+
+Prototype two consecutive rescue encounters in the browser. Hold through the wind curve to charge a relay. Release when a waiting ship crosses the relay window to give it a safe corridor. The first encounter teaches the timing with a visible ship and a forgiving window. The second offers a choice between an early release for one ship or holding for a later, more demanding pair. The lighthouse still comes online on every completed run. Rank by ships guided home, then delivery time. The intent is to give spectators a visible outcome and players a reason to immediately try a different release. This is a candidate mechanic and has not been built or tested.
+
+Use the WebStorm debugger and Vitest run configuration to verify one release event, one relay resolution and exactly one award per ship, including a missed window and an immediate replay. The native app currently stops at its first-launch User Agreement and requires MK to complete that action. A command-line inspection previously ran, and the terminal test suite is separately documented. The organizer makes the eligibility decision.
+
 ## Verified competition facts and remaining checks
 
 Sources checked directly on 2026-11-19:
