@@ -1,13 +1,13 @@
 # Competition strategy and execution plan
 
 Prepared: 2026-11-19 (America/Vancouver).
-Status updated 2026-11-19: MK approved the stack and authorized continuous implementation. The browser game is implemented; see QA.md for actual verification/release status. Competition submission remains unfinished. Historical planning targets below are not completion claims.
+Status updated 2026-11-19: MK approved the stack and authorized continuous implementation. The browser game is implemented; see QA_V2.md for actual verification and release status. Competition submission remains unfinished. Historical planning targets below are not completion claims.
 
 ## Experience direction superseded
 
 On 2026-11-19, MK rejected the v1 handling, visuals, sound and missing motivation. The delivery/engineering records below remain historical context; use UPGRADE_V2.md for the approved Last Light direction and QA_V2.md for current verification.
 
-## Recommendation
+## Original recommendation, superseded 2026-11-19
 
 Enter Category 3, Event Mini Game, with Cloud Jet: Last Light. Build a complete, original, one-button time trial that a booth visitor can understand quickly, finish despite mistakes, and immediately want to replay. The differentiator is two consequential timing decisions per corner: press to establish a drift, then release to convert stored energy into exit speed. Make those decisions visible through trajectory, propulsion and finish time.
 
