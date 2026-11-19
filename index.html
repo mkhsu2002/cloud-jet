@@ -38,8 +38,8 @@
         </div>
         <h1>LAST<br /><em>LIGHT</em></h1>
         <p class="intro">
-          The storm took the beacon. The fleet is still out there.<br />Carry
-          the ignition core to the lighthouse.
+          The storm took the beacon. The fleet is still out there.<br />Charge
+          the relays and guide the ships home.
         </p>
         <div class="home-actions">
           <button class="primary" id="race">
@@ -52,10 +52,10 @@
           >Compare harbor flights ↗</a
         >
         <a class="flight-comparison" id="rescue-link" href="?mission=rescue"
-          >Fly Convoy Rescue ↗</a
+          >Try two rescue turns ↗</a
         >
         <div class="course-summary">
-          <span><b>BEACON DELIVERY</b></span
+          <span><b>CONVOY RESCUE</b></span
           ><span>5 CORNERS</span><span>ONE BUTTON</span>
         </div>
       </section>
@@ -72,7 +72,7 @@
           <kbd>↑</kbd>
           <div>
             <b>RELEASE TO BOOST</b>
-            <p>Let go at the exit line. Feel the rush.</p>
+            <p>Follow the relay cue to rescue ships and boost.</p>
           </div>
         </div>
         <p class="input-note">Use <kbd>SPACE</kbd> or the on-screen button.</p>
@@ -84,7 +84,7 @@
             <div class="timer" id="timer">00:00.000</div>
           </div>
           <div class="race-progress">
-            <span id="rescued-live" hidden>0 / 3 SHIPS GUIDED HOME</span>
+            <span id="rescued-live" hidden>0 / 9 SHIPS GUIDED HOME</span>
             <span id="corner-label">SILENT HARBOR</span>
             <div class="progress-track"><i id="progress"></i></div>
             <span id="distance">0 / 2450 M</span>
@@ -142,7 +142,10 @@
             >Try the other flight ↗</a
           >
           <div class="leaderboard" id="leaderboard">
-            <h3>FASTEST FLIGHTS <span>ON THIS DEVICE</span></h3>
+            <h3>
+              <span id="leaderboard-name">CONVOY RECORDS</span>
+              <span>ON THIS DEVICE</span>
+            </h3>
             <ol id="records"></ol>
           </div>
         </div>

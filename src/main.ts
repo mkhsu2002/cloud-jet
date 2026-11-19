@@ -1,10 +1,16 @@
 import "./style.css";
 import { World } from "./world";
 import { Session } from "./session";
-import { COURSE, PRACTICE, RESCUE, type Track } from "./simulation";
-import { readRecords, saveRecord, type Store } from "./records";
+import {
+  COURSE,
+  PRACTICE,
+  RESCUE,
+  rescueCapacity,
+  type Track,
+} from "./simulation";
+import { readRecords, saveRecord, compareRecords, type Store } from "./records";
 import { AudioEngine } from "./audio";
-import { rescueCue } from "./rescue";
+import { rescueCue, rescuedTotal } from "./rescue";
 const byId = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const params = new URLSearchParams(location.search);
@@ -58,6 +64,19 @@ function start(track = selected) {
   byId("hud").hidden = false;
   byId("results").hidden = true;
   byId("paused").hidden = true;
+  const mission = rescueCapacity(track) > 0;
+  byId("rescued-live").hidden = !mission;
+  byId("rescue-results").hidden = !mission;
+  byId("race-results").hidden = mission;
+  byId("drift-action").textContent = mission
+    ? "RELEASE TO OPEN RELAY"
+    : "RELEASE TO BOOST";
+  byId("drift").setAttribute(
+    "aria-label",
+    mission
+      ? "Hold to charge the relay, release to open it"
+      : "Hold to drift, release to boost",
+  );
   byId("track-name").textContent = track.name.toUpperCase();
   document.body.classList.add("racing");
   byId("drift").focus({ preventScroll: true });
@@ -177,20 +196,18 @@ window.addEventListener("blur", () => interrupt());
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) interrupt();
 });
-function rescuedTotal(relays: readonly (number | null)[]) {
-  return relays.reduce<number>((total, count) => total + (count ?? 0), 0);
-}
 function finish() {
   const s = session.sim.state;
-  const records = exhibition ? [] : readRecords(store, selected.id);
-  const best = records[0]?.time;
-  const saved =
-    !exhibition &&
-    saveRecord(store, selected.id, {
-      time: s.time,
-      perfects: s.perfects,
-      date: new Date().toISOString().slice(0, 10),
-    });
+  const capacity = rescueCapacity(selected);
+  const ships = rescuedTotal(s.rescues);
+  const best = exhibition ? undefined : readRecords(store, selected.id)[0];
+  const entry = {
+    time: s.time,
+    perfects: s.perfects,
+    date: new Date().toISOString().slice(0, 10),
+    ships: capacity ? ships : undefined,
+  };
+  const saved = !exhibition && saveRecord(store, selected.id, entry);
   byId("hud").hidden = true;
   byId("results").hidden = false;
   byId("result-time").textContent = formatTime(s.time);
@@ -200,32 +217,34 @@ function finish() {
       : selected === PRACTICE
         ? "HARBOR PRACTICE COMPLETE"
         : "BEACON ONLINE";
-  byId("result-title").textContent = rescue
-    ? rescuedTotal(s.rescues) + " of 3 ships guided home."
-    : selected === PRACTICE
-      ? "Ready for the real flight."
-      : "The fleet has a way home.";
+  byId("result-title").textContent = capacity
+    ? ships + " of " + capacity + " ships guided home."
+    : "Ready for the real flight.";
   byId("arrival").hidden = true;
-  if (rescue) {
-    byId("rescue-results").textContent =
-      "Harbor: " +
-      (s.rescues[0] ?? 0) +
-      " · Storm Channel: " +
-      (s.rescues[1] ?? 0);
+  if (capacity) {
+    byId("rescue-results").textContent = s.rescues
+      .map((value, index) => selected.corners[index].name + ": " + (value ?? 0))
+      .join(" · ");
   }
-  byId("personal-best").textContent = rescue
-    ? s.rescues[1] === 2
-      ? "Both ships made it through the storm."
-      : "Hold past the first storm window to try for two."
-    : comparison
-      ? "Try the other flight through the same turn."
+  byId("personal-best").textContent = comparison
+    ? "Try the other flight through the same turn."
+    : rescue
+      ? "Try a different release on your next flight."
       : !saved
         ? "Finished! Local records could not be saved."
         : best === undefined
-          ? "Your first flight. Your next time to beat."
-          : s.time < best
+          ? "Your first flight. Your next score to beat."
+          : compareRecords(entry, best) < 0
             ? "NEW PERSONAL BEST"
-            : `${(s.time - best).toFixed(3)}s from your best. One more flight?`;
+            : capacity
+              ? "Personal best: " +
+                (best.ships ?? 0) +
+                " ships · " +
+                formatTime(best.time)
+              : formatTime(best.time) + " is your best time.";
+  byId("leaderboard-name").textContent = capacity
+    ? "CONVOY RECORDS"
+    : "FASTEST FLIGHTS";
   byId("result-perfect").textContent =
     `${s.perfects}/${selected.corners.length}`;
   byId("result-boost").textContent = String(s.boosts);
@@ -236,7 +255,7 @@ function finish() {
       .map((r, i) => {
         const li = document.createElement("li");
         const left = document.createElement("span");
-        left.textContent = `${String(i + 1).padStart(2, "0")}   ${r.date}`;
+        left.textContent = `${String(i + 1).padStart(2, "0")}   ${capacity ? (r.ships ?? 0) + " ships" : r.date}`;
         const right = document.createElement("span");
         right.textContent = formatTime(r.time);
         li.append(left, right);
@@ -285,7 +304,7 @@ function frame(now: number) {
     ) {
       byId("arrival-stage").textContent = "Beacon online";
       const ships = rescuedTotal(s.rescues);
-      byId("arrival-line").textContent = rescue
+      byId("arrival-line").textContent = s.rescues.length
         ? ships === 0
           ? "The signal is ready for the next convoy."
           : ships === 1
@@ -320,16 +339,25 @@ function frame(now: number) {
         next && s.distance > next.end - 45
           ? "RELEASE AT THE EXIT ↑"
           : "HOLD YOUR LINE";
-    if (rescue) {
+    if (s.rescues.length) {
       const relay = s.rescues.indexOf(null);
       byId("rescued-live").textContent =
-        rescuedTotal(s.rescues) + " / 3 SHIPS GUIDED HOME";
+        rescuedTotal(s.rescues) +
+        " / " +
+        rescueCapacity(selected) +
+        " SHIPS GUIDED HOME";
       if (relay < 0) cue = "FLY IT HOME";
-      else if (s.drifting) cue = rescueCue(relay, s.distance, s.energy);
+      else if (s.drifting)
+        cue = rescueCue(relay, s.distance, s.energy, {
+          escorted: rescuedTotal(s.rescues),
+          entryQuality: s.entryQuality,
+          slip: s.slip,
+          lateral: s.lateral,
+        });
     } else if (s.boostRemaining > 0) cue = comparison ? "" : "BOOSTING ↗";
     byId("cue").textContent = cue;
     byId("energy").style.width = `${s.energy * 100}%`;
-    byId("energy-label").textContent = rescue
+    byId("energy-label").textContent = s.rescues.length
       ? "RELAY CHARGE"
       : s.boostRemaining > 0
         ? "EXIT SPEED"
@@ -355,9 +383,13 @@ function frame(now: number) {
         ? "HARBOR CONTROL · Core secured. The fleet is waiting."
         : s.distance >= 560 && s.distance < 700
           ? "HARBOR CONTROL · Entering the storm channel."
-          : s.distance >= 1750 && s.distance < 1900
-            ? "HARBOR CONTROL · Lighthouse ahead. Bring them home."
-            : "";
+          : s.distance >= 1020 && s.distance < 1120
+            ? "CLOUD BREAK · Charge fully to guide the heavy hauler."
+            : s.distance >= 1460 && s.distance < 1550
+              ? "BEACON APPROACH · Bring three escorts and hit a clean entry to guide the pair."
+              : s.distance >= 1960 && s.distance < 2070
+                ? "LIGHTHOUSE · Keep holding until the craft levels out for the final pair."
+                : "";
     if (byId("radio").textContent !== radio) byId("radio").textContent = radio;
     byId("radio").hidden = !radio;
   } else byId("radio").hidden = true;
@@ -378,6 +410,7 @@ try {
   world = new World(byId<HTMLCanvasElement>("world"));
   world.setClassicBoost(classic);
   if (rescue) {
+    document.body.classList.add("short-rescue");
     world.setTrack(RESCUE);
     byId("race").textContent = "Launch convoy rescue";
     byId("practice").hidden = true;

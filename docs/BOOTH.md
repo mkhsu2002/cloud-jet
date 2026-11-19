@@ -6,7 +6,7 @@ Updated: 2026-11-19. Applies to the browser implementation introduced in this sp
 
 Use a modern desktop browser with WebGL 2 and hardware acceleration. Open the hosted game or run the bundled build locally. Start with a keyboard and a 1080p display; use the full-screen button after opening the page. Harbor Shakedown is a single-corner practice run. Last Light has five corners and ends with a short sequence showing the core delivery, beacon ignition and convoy departure. Press Space during the arrival scene to go straight to results.
 
-Launch the mission from the normal home address for ranked booth play. Convoy Rescue on the home page is a separate two-bend mode. Its results report ships guided home and do not affect time-trial rankings. The optional harbor comparison runs the same practice track with both speed displays hidden and excludes those attempts from rankings.
+Launch the mission from the normal home address for ranked booth play. The five-turn mission ranks by ships guided home, then by delivery time. The two-turn tutorial on the home page is unranked. The optional harbor comparison runs the same practice track with both speed displays hidden and excludes those attempts from rankings.
 
 Controls: press and hold Space at the gold entry line, keep holding through the corner, release at the cyan exit line. The circular on-screen button offers the same hold/release interaction for a mouse or touch input. Mistakes slow the flight and never eliminate the player. Restart is available at any time. Focus loss or a suspended tab ends that attempt; choose a fresh flight to rank.
 

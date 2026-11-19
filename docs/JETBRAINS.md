@@ -14,6 +14,10 @@ On November 19, after license activation, WebStorm launched Vitest 5.1.1 using a
 
 To reproduce in WebStorm, use a Node.js run configuration with the project as the working directory, `node_modules/vitest/vitest.mjs` as the entry point and `run tests/rescue.test.ts --pool=threads --maxWorkers=1` as the application arguments. Use Run for the test result and Debug for source breakpoints. Keep local interpreter paths and license data out of Git.
 
+## Five-turn mission
+
+WebStorm Debug traced the final relay through the simulation to the alignment predicate. The observed lateral offset led to a wider release window. The full WebStorm Run configuration used `run --pool=threads --maxWorkers=1` and passed 23 tests across five files with exit code 0. The [development log](DEVELOPMENT_LOG.md) records the affected release and measured values.
+
 ## References
 
 - https://www.jetbrains.com/help/webstorm/command-line-code-inspector.html

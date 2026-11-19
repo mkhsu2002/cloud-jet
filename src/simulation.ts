@@ -1,5 +1,10 @@
 import { curvature } from "./track";
-import { RELAYS, resolveRelay, type RescueOutcome } from "./rescue";
+import {
+  RELAYS,
+  resolveRelay,
+  rescuedTotal,
+  type RescueOutcome,
+} from "./rescue";
 export const STEP = 1 / 120;
 export interface Corner {
   start: number;
@@ -20,7 +25,7 @@ export const PRACTICE: Track = {
   corners: [{ start: 180, end: 340, direction: 1, name: "HARBOR TURN" }],
 };
 export const COURSE: Track = {
-  id: "last-light-v2",
+  id: "last-light-rescue-v1",
   name: "Last Light",
   length: 2450,
   corners: [
@@ -37,6 +42,16 @@ export const RESCUE: Track = {
   length: 1040,
   corners: COURSE.corners.slice(0, 2),
 };
+export function rescueCount(track: Track) {
+  return track === COURSE || track === RESCUE ? track.corners.length : 0;
+}
+export function rescueCapacity(track: Track) {
+  return RELAYS.slice(0, rescueCount(track)).reduce(
+    (total, windows) =>
+      total + Math.max(...windows.map((window) => window.ships)),
+    0,
+  );
+}
 export interface RaceState {
   rescues: RescueOutcome[];
   time: number;
@@ -62,7 +77,7 @@ const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 function initial(track: Track): RaceState {
   return {
-    rescues: track === RESCUE ? RELAYS.map(() => null) : [],
+    rescues: Array.from({ length: rescueCount(track) }, () => null),
     time: 0,
     distance: 0,
     speed: 32,
@@ -161,7 +176,12 @@ export class Simulation {
         if (release > 0.82 && s.entryQuality > 0.82) s.perfects++;
         const relay = this.track.corners.indexOf(c);
         if (s.rescues[relay] === null) {
-          const outcome = resolveRelay(relay, s.distance, s.energy);
+          const outcome = resolveRelay(relay, s.distance, s.energy, {
+            escorted: rescuedTotal(s.rescues),
+            entryQuality: s.entryQuality,
+            slip: s.slip,
+            lateral: s.lateral,
+          });
           s.rescues[relay] = outcome;
           this.message(
             outcome === 0

@@ -956,7 +956,7 @@ body:not(.racing) .vignette {
   color: #d1e3ec;
 }
 
-body:has(#rescued-live:not([hidden])) .home h1 {
+body.short-rescue .home h1 {
   font-size: clamp(3rem, 7vw, 7rem);
   max-width: 7em;
   line-height: 0.9;

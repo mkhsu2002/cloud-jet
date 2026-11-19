@@ -107,3 +107,11 @@ Started a separate session with the IDE Debug button. WebStorm stopped in `resol
 | 767.130 m | No match between the two windows | 0 |
 
 At `tests/rescue.test.ts:50`, immediately after `sim.reset()`, WebStorm's Evaluate Expression showed `{"rescues":[null,null],"distance":0,"time":0}`. No rescue logic changes were required. The successful full test result is from the IDE Run session, while the parameter values are from the separate interactive Debug session.
+
+## 2026-11-19 · Five-turn Last Light rescue mission
+
+Codex implemented the full, ranked convoy mission. Cloud Break rewards high charge, Beacon Approach requires an existing escort of three ships and a clean entry for the second ship, and Last Light rewards centering the aircraft before releasing. The ending renders one moving ship per rescue. Convoy records prioritize ship count and use delivery time to break ties.
+
+Used the **Last Light Debug** Node.js configuration in WebStorm 2026.3 (WS-263.7307.202), with Node 24.22.3 and Vitest 5.1.1. The JavaScript debugger stopped in `eligibleBonus` and `resolveRelay`, called by `Simulation.apply`. On the fifth turn at 2191.378 m, the debugger showed seven ships already escorted, full charge, slip of 0.035 rad, and a lateral offset of 3.620 m. The offset exceeded the 1.55 m limit, so the run could only return eight ships at that release point. Extended the closing edge from 2200 m to 2252 m so players can wait for the aircraft to recenter. The integration regression now returns nine ships with the later release and one at the final relay with the earlier release. It also verifies that replay clears all five relay results.
+
+Ran the full suite inside WebStorm using **Last Light Regression**, a Node.js configuration with `node_modules/vitest/vitest.mjs` and arguments `run --pool=threads --maxWorkers=1`. Its Run console showed **5 test files passed, 23 tests passed, exit code 0**. The suite includes the three bonus conditions, a missed window, reset, duplicate prevention, and ranking by ship count before delivery time.

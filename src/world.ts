@@ -1,7 +1,14 @@
-import { RELAYS } from "./rescue";
+import { RELAYS, rescuedTotal } from "./rescue";
 import { boostShot } from "./boost-presentation";
 import * as THREE from "three";
-import { COURSE, RESCUE, type RaceState, type Track } from "./simulation";
+import {
+  COURSE,
+  RESCUE,
+  rescueCount,
+  rescueCapacity,
+  type RaceState,
+  type Track,
+} from "./simulation";
 import { sampleTrack, curvature } from "./track";
 import {
   courier,
@@ -290,7 +297,7 @@ export class World {
         "HOLD  /  " + String(i + 1).padStart(2, "0"),
         this.gold,
       );
-      if (track !== RESCUE) this.gate(c.end - 10, "RELEASE", this.cyan);
+      if (!rescueCount(track)) this.gate(c.end - 10, "RELEASE", this.cyan);
     });
     this.gate(
       track.length,
@@ -298,12 +305,20 @@ export class World {
       this.gold,
     );
     this.buildRouteScenery(track);
-    if (track === RESCUE) {
-      RELAYS.forEach((windows, relay) =>
+    if (rescueCount(track)) {
+      RELAYS.slice(0, rescueCount(track)).forEach((windows, relay) =>
         windows.forEach((window, index) => {
           this.gate(
             window.from,
-            window.ships === 2 ? "TWO SHIPS" : "ONE SHIP",
+            window.bonus
+              ? {
+                  heavy: "HAULER RELAY",
+                  escort: "ESCORT RELAY",
+                  alignment: "ALIGNMENT RELAY",
+                }[window.bonus]
+              : window.ships === 2
+                ? "TWO SHIPS"
+                : "ONE SHIP",
             index ? this.gold : this.cyan,
           );
           for (let formation = 0; formation < window.ships; formation++) {
@@ -555,9 +570,13 @@ export class World {
         this.gold,
       );
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < rescueCapacity(track); i++) {
       const ship = new THREE.Group();
-      ship.position.set(i * 10 - 12, 8 + (i % 2) * 5, -i * 12);
+      ship.position.set(
+        ((i % 3) - 1) * 13,
+        8 + Math.floor(i / 3) * 5,
+        -Math.floor(i / 3) * 19 - (i % 3) * 6,
+      );
       ship.rotation.y = 0.28;
       fleetShip(ship);
       this.convoy.add(ship);
@@ -669,22 +688,14 @@ export class World {
       light.visible = this.arrivalTime > 0.5 + i * 0.072;
     });
     this.convoy.visible = delivered && this.arrivalTime > 0.82;
-    if (this.track === RESCUE) {
-      const count = s.rescues.reduce<number>(
-        (total, ships) => total + (ships ?? 0),
-        0,
-      );
-      this.convoy.children.forEach((ship, index) => {
-        ship.visible = index < count;
-      });
-    } else
-      this.convoy.children.forEach((ship) => {
-        ship.visible = true;
-      });
+    const count = rescuedTotal(s.rescues);
+    this.convoy.children.forEach((ship, index) => {
+      ship.visible = index < count;
+    });
     if (delivered) {
       const distance = THREE.MathUtils.smoothstep(this.arrivalTime, 1.05, 4.4);
       this.convoy.position.copy(
-        offset(this.track.length + 8 + distance * 82, 37, this.track),
+        offset(this.track.length + 40 + distance * 72, 5, this.track),
       );
       this.convoy.position.y += distance * 10;
       this.convoy.rotation.y = -sampleTrack(this.track, this.track.length)
@@ -696,7 +707,9 @@ export class World {
     for (const { group, relay, window, formation } of this.rescueFleet) {
       const gate = RELAYS[relay][window];
       const result = s.rescues[relay];
-      const saved = result === gate.ships;
+      const saved = gate.bonus
+        ? (result ?? 0) > formation
+        : result === gate.ships;
       const forward = saved ? Math.min(54, Math.max(0, d - gate.from)) : 0;
       const shipDistance =
         (gate.from + gate.to) * 0.5 + formation * 10 + forward;
@@ -721,7 +734,11 @@ export class World {
       s.speed,
       time,
       s.boostRemaining > 0 ? s.thrust : 0,
-      active && !delivered && this.track === COURSE && d >= 530 && d < 1620,
+      active &&
+        !delivered &&
+        rescueCount(this.track) > 0 &&
+        d >= 530 &&
+        d < 1620,
     );
     const p = offset(d, s.lateral, this.track);
     this.ship.position
@@ -753,7 +770,8 @@ export class World {
       );
       trail.material.uniforms.drive.value = this.pitchVelocity;
     }
-    const isStorm = active && this.track === COURSE && d >= 485 && d < 1680;
+    const isStorm =
+      active && rescueCount(this.track) > 0 && d >= 485 && d < 1680;
     this.storm +=
       (Number(isStorm) - this.storm) * (1 - Math.exp(-elapsed * 2.6));
     const skyMaterial = this.sky?.material as THREE.ShaderMaterial | undefined;
