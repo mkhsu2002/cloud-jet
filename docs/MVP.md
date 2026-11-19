@@ -20,4 +20,4 @@ V1 functionality is implemented, but MK rejected the experience on 2026-11-19. T
 
 See QA.md for observed automated and browser results. A developer-machine test is not proof of every booth device, true physical touch hardware, unattended multi-hour reliability or independent playtest success.
 
-Interactive WebStorm debugging/tests, external playtests, final demo video, submission-field recheck, registration/eligibility confirmation and binding final submission are separate unfinished competition tasks. No finished-game feature list should be read as a completed competition submission.
+Interactive WebStorm debugging and IDE testing are complete for the two-bend rescue prototype. External playtests, final demo video, submission-field recheck, registration/eligibility confirmation and binding final submission are separate unfinished competition tasks. No finished-game feature list should be read as a completed competition submission.

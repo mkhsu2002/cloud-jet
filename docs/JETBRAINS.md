@@ -8,17 +8,11 @@ WebStorm 2026.3, build WS-263.7307.202, ran its offline project inspection throu
 
 The first inspection identified an ambiguous DOM-helper name that triggered jQuery heuristics, an unresolved Node process reference, and a server-listen signature warning. The helper was renamed, process imported explicitly, and the server configured through the listen options object. These changes were reviewed and verified with TypeScript/build/tests. Additional unused-symbol warnings on structural storage test doubles and prose style suggestions are not evidence of game failures.
 
-## Remaining interactive work
+## Interactive rescue debugging and tests
 
-Do not claim interactive breakpoint debugging or test execution inside the IDE yet. To collect those distinct forms of evidence:
+On November 19, after license activation, WebStorm launched Vitest 5.1.1 using a local Node.js configuration called **Convoy Rescue** and Node 24.22.3. Its Run console showed four tests passed and exit code 0. Its JavaScript debugger stopped at `src/rescue.ts:22` and `tests/rescue.test.ts:50`. The debugger confirmed one ship, two ships, no matching window, and an empty rescue state after reset. See the [development log](DEVELOPMENT_LOG.md) for source revision, parameters and exact observed values.
 
-1. Open the repository in WebStorm. MK completes any required first-launch, account or license interaction.
-2. Set the project's Node runtime to 24.22.3 and install pinned packages with `npm ci`.
-3. Run `dev` from package.json and debug `Simulation.apply`/`step` with a real press/release interaction; compare event timestamps with simulation time.
-4. Run `tests/simulation.test.ts` from the IDE and inspect timing/replay results.
-5. Add the actual action, version, result and commit to DEVELOPMENT_LOG.md; review screenshots for private information.
-
-No Unity, Rider or Toolbox is needed for this stack. Junie and Air have not been used. A paid subscription is not required by this project's technical plan, and none has been purchased by this task.
+To reproduce in WebStorm, use a Node.js run configuration with the project as the working directory, `node_modules/vitest/vitest.mjs` as the entry point and `run tests/rescue.test.ts --pool=threads --maxWorkers=1` as the application arguments. Use Run for the test result and Debug for source breakpoints. Keep local interpreter paths and license data out of Git.
 
 ## References
 

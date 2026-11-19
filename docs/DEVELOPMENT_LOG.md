@@ -93,3 +93,17 @@ Implemented a harbor relay and two mutually exclusive storm relay windows. It is
 Played both choices in Chrome from the local production build. The early release brought two ships home in total and the later release brought three. Checked the displayed cue, arrival scene, sector results and replay. Terminal Vitest passed 19 tests, including four new rescue regressions for distinct outcomes, missed windows, repeated attempts, charge boundaries and reset. TypeScript, formatting and production build also passed.
 
 MK confirmed acceptance of the WebStorm User Agreement. The native app progressed to Manage Licenses, which displayed that the account had no valid licenses. The app remained on that screen after rechecking. No interactive debugger or IDE test run occurred in this session. The terminal test results are separate from JetBrains tooling evidence.
+
+## 2026-11-19 · WebStorm rescue debugging and regressions
+
+After MK activated WebStorm, opened the project in WebStorm 2026.3 (WS-263.7307.202) at source revision `6137238`. Created a local Node.js Run/Debug configuration named **Convoy Rescue** with Node 24.22.3, the project working directory, entry point `node_modules/vitest/vitest.mjs` and arguments `run tests/rescue.test.ts --pool=threads --maxWorkers=1`. Started it from the IDE Run button. The WebStorm Run console showed **4 passed (4)** and **exit code 0**. The suite covered the different second-turn outcomes, missed/no-input windows, duplicate prevention and replay, plus window and charge boundaries.
+
+Started a separate session with the IDE Debug button. WebStorm stopped in `resolveRelay` at `src/rescue.ts:22` from the simulation call stack. Stepped over the window lookup and read the debugger's local variables. Each second-turn sample had relay index 1 and charge 1.0:
+
+| Release position | Observed match | Ships awarded |
+| --- | --- | --- |
+| 741.503 m | 728–758 m window, `match.ships = 1` | 1 |
+| 790.551 m | 781–803 m window, `match.ships = 2` | 2 |
+| 767.130 m | No match between the two windows | 0 |
+
+At `tests/rescue.test.ts:50`, immediately after `sim.reset()`, WebStorm's Evaluate Expression showed `{"rescues":[null,null],"distance":0,"time":0}`. No rescue logic changes were required. The successful full test result is from the IDE Run session, while the parameter values are from the separate interactive Debug session.

@@ -21,7 +21,7 @@ MK rejected the existing time trial as too conventional. The deployed build and 
 
 Prototype two consecutive rescue encounters in the browser. Hold through the wind curve to charge a relay. Release when a waiting ship crosses the relay window to give it a safe corridor. The first encounter teaches the timing with a visible ship and a forgiving window. The second offers a choice between an early release for one ship or holding for a later, more demanding pair. The lighthouse still comes online on every completed run. Rank by ships guided home, then delivery time. The intent is to give spectators a visible outcome and players a reason to immediately try a different release. The two-bend prototype implements both choices, counts the convoy in the beacon ending and shows both sector results. See QA_V2.md for validation. The five-bend time trial is still a separate mode.
 
-Use the WebStorm debugger and Vitest run configuration to verify one release event, one relay resolution and exactly one award per ship, including a missed window and an immediate replay. The native app currently stops at its first-launch User Agreement and requires MK to complete that action. A command-line inspection previously ran, and the terminal test suite is separately documented. The organizer makes the eligibility decision.
+WebStorm activation and interactive verification for the two-bend rescue are complete. The IDE ran the four rescue cases and its debugger stepped through the three release outcomes and replay reset. DEVELOPMENT_LOG.md records the evidence. The organizer makes the eligibility decision.
 
 ## Verified competition facts and remaining checks
 

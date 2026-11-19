@@ -60,7 +60,7 @@ Rendering does not decide timing quality. Input replays are tested across 30/60/
 
 Prepared for **Category 3: Event Mini Game** of the [Cloud9 × JetBrains Sky's the Limit Hackathon](https://cloud9.devpost.com/rules). This is an independent project, not an official Cloud9 or JetBrains product or endorsement. Eligibility, current category specifics and final submission remain separate checks.
 
-Codex assists implementation; WebStorm 2026.3 has performed an actual offline project inspection. The inspected findings, completed checks and remaining limitations are recorded in the [development log](docs/DEVELOPMENT_LOG.md), [JetBrains workflow](docs/JETBRAINS.md) and [QA status](docs/QA.md). Interactive IDE debugging and IDE test execution must not be claimed until performed.
+Codex assists implementation. WebStorm 2026.3 performed offline project inspections and later ran the Convoy Rescue regressions in its Run window. Its debugger traced early, late and missed releases as well as replay reset. See the [development log](docs/DEVELOPMENT_LOG.md), [JetBrains workflow](docs/JETBRAINS.md) and [current QA status](docs/QA_V2.md).
 
 The [competition plan](docs/COMPETITION_PLAN.md) records the two-day scope. The earlier multi-week delivery proposal was superseded on November 19, 2026. This repository now contains a runnable game; older setup-only entries in the development log are historical checkpoints.
 
