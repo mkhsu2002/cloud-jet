@@ -55,3 +55,4 @@
 - Verified the actual public game end-to-end: 41.850 s, five perfect corners, five boosts, zero wall grazes, visible saved local ranking. The perfect run is slightly below the original approximate session target; imperfect runs take longer.
 - Verified full-screen switching, landscape layout, interrupted-attempt restart and returning to a clean hangar. No competition submission or account terms acceptance occurred.
 - Updated the quality workflow to official checkout v7.0.1 and setup-node v7.1.0 (both Node 24 actions) after the first run reported deprecated Node 20 action runtimes. This changes CI tooling only; the served game build remains the verified implementation commit.
+- Confirmed the updated Node 24 action workflow passed GitHub run 44600648959; final public console had zero errors/warnings, rankings persisted and replay/home worked. This audit update is documentation-only and does not redeploy the game.

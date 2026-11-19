@@ -40,7 +40,9 @@ Published to https://cloud-jet.pages.dev from source commit `87f2e09a39dd0dcf693
 
 ### Hosted gameplay readback
 
-On the public production URL, a [complete keyboard run](evidence/live-circuit-result.png) finished in **41.850 s**, with **5/5 perfect corners, five boosts and zero wall grazes**. The result was saved to that origin’s local ranking. This measured perfect run is slightly shorter than the original approximate 45–75 second design target; the earlier imperfect run took 46.217 s. No artificial time padding was added.
+On the public production URL, a [complete keyboard run](evidence/live-circuit-result.png) finished in **41.850 s**, with **5/5 perfect corners, five boosts and zero wall grazes**. The result was saved to that origin’s local ranking. This measured perfect run is slightly shorter than the original approximate 45–75 second design target; the earlier imperfect run took 46.217 s. No artificial time padding was added. The public replay starts with a fresh timer, returning to the hangar restores the home scene, and the final browser console check reported zero errors or warnings.
+
+The CI-tooling update (`8b62c22`) also passed [GitHub quality run 44600648959](https://github.com/mkhsu2002/cloud-jet/actions/runs/44600648959), including clean install, formatting, all 14 tests and production build on the Node 24 action runtimes. Later documentation-only audit commits do not replace the served game or trigger deployment.
 
 ## Remaining competition / event validation
 
