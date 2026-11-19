@@ -23,3 +23,11 @@
 - Translated the README into English while preserving the existing facts, design choices, links and implementation-status caveats.
 - Checked all tracked project files for remaining Chinese text; none remained.
 - Recorded English as the project-wide language for documentation, code comments, UI copy, tests and development logs.
+
+## 2026-11-19 · Competition planning
+
+- Cloned the public repository into the local project workspace and verified main matched origin at `3bd2d77` before planning edits.
+- Read the README, MVP, JetBrains workflow and project guardrails. The repository remains documentation-only.
+- Reviewed the current official Devpost overview and rules: Category 3, actual JetBrains tool use, five equally weighted criteria, and January 12, 2027 at 11:00 Pacific submission deadline.
+- The current Submission Specifics page returned HTTP 403. Search results also contained previous-edition material; those older requirements were not adopted.
+- Added a proposed competition strategy, milestone schedule, acceptance checks, evidence plan and submission handoff in COMPETITION_PLAN.md. No game tests, IDE activation, deployment, registration or submission occurred in this task.

@@ -39,6 +39,8 @@ WebStorm is not chosen merely to meet the competition's tooling requirement. Fai
 
 See the [MVP plan](docs/MVP.md), [JetBrains workflow](docs/JETBRAINS.md) and [Codex guidelines](AGENTS.md).
 
+The [competition strategy and execution plan](docs/COMPETITION_PLAN.md), prepared on November 19, 2026, proposes Category 3 positioning, a delivery schedule, evidence requirements and submission checks. It records the current official-rule review and remaining verification items; its milestones are plans, not completed work.
+
 The first stage is just a straight, one corner and an exit straight, to establish whether holding to drift and releasing to boost feels good. Then expand to a complete timed course, visual polish and booth reliability. This stage covers project setup and planning; there is no runnable game or passed game test suite yet.
 
 ## Development history
