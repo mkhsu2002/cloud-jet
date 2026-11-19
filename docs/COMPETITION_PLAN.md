@@ -9,7 +9,7 @@ Enter Category 3, Event Mini Game, with Cloud Jet: Drift & Boost. Build a comple
 
 Pursue the optional AI-Powered Workflow Story only using evidence collected during necessary engineering work. Keep Codex as primary implementation assistance and WebStorm as the genuine debugging, inspection and test workbench. Junie or Air is optional; do not add tools solely for appearance.
 
-Planning assumption: MK plus Codex, a desktop-browser-first game, and no backend for the MVP. Dates below are proposed milestones, not a claim about available staffing or guaranteed delivery. Re-estimate after the single-corner prototype.
+Planning basis: MK plus Codex, a desktop-browser-first game, and no backend for the MVP. Updated on 2026-11-19 at MK’s direction: replace the previous multi-week delivery proposal with a two-day focused sprint. The earlier November-to-January implementation schedule is superseded. Completion remains subject to actual validation.
 
 ## Verified competition facts and remaining checks
 
@@ -69,30 +69,20 @@ Late input, missed input and wall contact reduce physical progress or speed; do 
 
 Public game copy explains controls and results only. Keep evidence, implementation details, test thresholds, tool choices and production instructions out of gameplay screens. A dedicated competition methodology/workflow document may disclose the tool work explicitly required for judging, after removing secrets and private information.
 
-## Delivery milestones
+## Two-day execution
 
-All dates use America/Vancouver. Core work targets December 20 to leave holiday and submission buffer.
+Target: November 19–20, 2026 (America/Vancouver). Work continuously through implementation and validation; this is a focused delivery target, not a claim of completed work.
 
-| Window | Deliverable | Exit condition |
+| Stage | Deliverable | Gate |
 | --- | --- | --- |
-| Nov 19–22 | Confirm scope and logistics; select runtime; establish scaffold, simulation boundary and test runner | Clean install/build from a fresh checkout; MK completes any necessary IDE activation; registration and current specifics tracked accurately |
-| Nov 23–29 | One straight, one bend, one exit; placeholder vehicle; real press/hold/release behavior | Ideal input reliably beats controlled early/late replays; missed/held input still finishes; a first-time player can explain the two moments |
-| Nov 30–Dec 6 | Full course and race lifecycle; local leaderboard; pause/restart recovery | Complete playable loop; target clean runs around 45–75 seconds; consecutive races reset all state; interrupted runs cannot rank |
-| Dec 7–13 | Visual and sound polish, clearer cues, low-effects option, local offline package | Readable turns on the target display; documented target device and measured performance; no external asset dependency during play |
-| Dec 14–20 | Small playtest round and booth hardening | Record at least five new players' completion, understanding, retries and observations; run automated replays and a two-hour manual/automated soak; prioritize observed issues |
-| Dec 21–Jan 3 | Fix findings, prepare hosted candidate, README/runbook, provenance and workflow case study | Fresh-checkout reproduction; hosted/offline candidate checks; source/build correspondence; all public copy reviewed; no unsupported claims |
-| Jan 4–8 | Record final English demo and prepare submission package | Video under three minutes; all links accessible without login; final game matches video; MK reviews submission and performs binding final submit |
-| Jan 9–12 | Submission contingency buffer | Resolve upload/access problems; confirm platform receipt before Jan 12, 11:00 Pacific; do not leave first submission to deadline day |
-| Through Feb 3, 15:00 Pacific | Preserve judge access | Keep submitted build reachable and retain release source/assets; do not overwrite it with later development |
+| Day 1, first block | Supported Node LTS, TypeScript/Vite scaffold, simulation and one rendered bend | Press/hold/release visibly changes racing line, speed and time; bad input still finishes |
+| Day 1, second block | Complete course, countdown, results, instant replay, local leaderboard | Full playable loop; resets and focus loss handled; deterministic timing comparisons pass |
+| Day 2, first block | Original 3D presentation, audio, clear cues, low-effects option, local offline package | Smooth play on the target machine; all assets bundled; real WebStorm debugging/test evidence recorded |
+| Day 2, second block | Playtest/fixes, soak test, hosted candidate, run instructions and submission materials | Build/test checks, public-copy review, source/build correspondence and actual online/offline play verified |
 
-Implementation order inside the first slice:
+Use TypeScript + Vite + Three.js with WebGL rendering, plain HTML/CSS overlays, Web Audio and versioned localStorage records. Keep simulation separate from rendering. Vitest is the proposed simulation-test runner. Runtime and dependency versions are selected and pinned during setup. Avoid a backend, full physics engine, multiplayer and elaborate asset pipelines in this sprint.
 
-1. Pin runtime/dependencies and create simulation, input and rendering modules.
-2. Implement timestamped input, fixed-step update and race lifecycle without visual polish.
-3. Add entry timing, hold energy, release timing and wall/recovery response.
-4. Add minimal track/vehicle feedback to judge feel.
-5. Run deterministic input comparisons and real WebStorm breakpoint/test work.
-6. Observe a new player's first attempts, tune and decide whether to expand.
+Deployment and submission materials are part of the target. External publication follows the applicable release checks; MK performs any binding final competition submission. Preserve judge access through February 3, 2027 at 15:00 Pacific once submitted.
 
 ## Internal acceptance and stop rules
 
@@ -102,7 +92,7 @@ Implementation order inside the first slice:
 - Record first-time-player completion rate, time to understand controls and voluntary retries. The first sample is formative, not statistical proof of impact. If fewer than four of five players understand the mechanic without coaching, simplify cues before expanding content.
 - Measure frame times on the declared target device. Aim for smooth 60 fps there; reduce effects before sacrificing input/simulation correctness. Browser automation, when needed, must follow the authorized browser-lane rules.
 - Verify the offline package with networking disabled after local setup. During the soak, check repeated resets, resource growth, stuck input, audio behavior and leaderboard storage failure.
-- If the Nov 29 slice is not fun or legible, spend the next milestone fixing it and cut decorative scope. If Dec 20 reliability gates fail, remove optional features and repair; do not hide failures or present planned tests as passed.
+- If the first playable slice is not fun or legible, fix its controls and cues immediately and cut decorative scope. If reliability gates fail, repair before release; do not hide failures or present planned tests as passed.
 - If the schedule slips, cut touch support, ghost replay, extra track sections and decorative effects first. Preserve the complete loop, forgiving finish, timing correctness, local ranking and submission evidence.
 
 ## Evidence and submission package

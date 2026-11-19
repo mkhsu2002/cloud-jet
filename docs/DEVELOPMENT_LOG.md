@@ -31,3 +31,9 @@
 - Reviewed the current official Devpost overview and rules: Category 3, actual JetBrains tool use, five equally weighted criteria, and January 12, 2027 at 11:00 Pacific submission deadline.
 - The current Submission Specifics page returned HTTP 403. Search results also contained previous-edition material; those older requirements were not adopted.
 - Added a proposed competition strategy, milestone schedule, acceptance checks, evidence plan and submission handoff in COMPETITION_PLAN.md. No game tests, IDE activation, deployment, registration or submission occurred in this task.
+
+## 2026-11-19 · Two-day sprint correction
+
+- MK replaced the multi-week delivery proposal with a focused November 19–20 sprint. The previous implementation schedule is superseded.
+- Rechecked current official rules and Vite/Three.js documentation for the browser-first recommendation. WebStorm qualifies as the required JetBrains tool when genuinely used; a web demo is explicitly supported by the rules.
+- Recommended TypeScript + Vite + Three.js, separate deterministic simulation, plain HTML/CSS UI, Web Audio, localStorage and Vitest. No runtime dependencies have been installed or game behavior tested yet.
