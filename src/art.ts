@@ -65,41 +65,125 @@ function hullSection(
   segments = 12,
 ) {
   const positions: number[] = [];
+  const uv: number[] = [];
   const indices: number[] = [];
+  const stride = segments + 1;
+  const front = sections[0][0];
+  const length = sections[sections.length - 1][0] - front;
   for (const [z, width, height, y] of sections) {
-    for (let i = 0; i < segments; i++) {
+    for (let i = 0; i <= segments; i++) {
       const angle = ((i + 0.5) / segments) * Math.PI * 2;
       positions.push(Math.cos(angle) * width, y + Math.sin(angle) * height, z);
+      uv.push(i / segments, (z - front) / length);
     }
   }
   for (let row = 0; row < sections.length - 1; row++) {
     for (let i = 0; i < segments; i++) {
-      const a = row * segments + i,
-        b = row * segments + ((i + 1) % segments);
-      indices.push(a, b, a + segments, b, b + segments, a + segments);
+      const a = row * stride + i;
+      const b = a + 1;
+      indices.push(a, b, a + stride, b, b + stride, a + stride);
     }
   }
   for (const row of [0, sections.length - 1]) {
     const [z, , , y] = sections[row];
     const center = positions.length / 3;
     positions.push(0, y, z);
+    uv.push(0.5, row === 0 ? 0 : 1);
     for (let i = 0; i < segments; i++) {
-      const a = row * segments + i;
-      const b = row * segments + ((i + 1) % segments);
+      const a = row * stride + i;
+      const b = a + 1;
       if (row === 0) indices.push(center, b, a);
       else indices.push(center, a, b);
     }
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(indices);
   geo.computeVertexNormals();
+  const normals = geo.getAttribute("normal");
+  const normal = new THREE.Vector3();
+  for (let row = 0; row < sections.length; row++) {
+    const a = row * stride;
+    const b = a + segments;
+    normal
+      .set(
+        normals.getX(a) + normals.getX(b),
+        normals.getY(a) + normals.getY(b),
+        normals.getZ(a) + normals.getZ(b),
+      )
+      .normalize();
+    normals.setXYZ(a, normal.x, normal.y, normal.z);
+    normals.setXYZ(b, normal.x, normal.y, normal.z);
+  }
   return mesh(group, geo, mat);
 }
 
+let enamelMap: THREE.CanvasTexture | undefined;
+function wornEnamel() {
+  if (enamelMap) return enamelMap;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 768;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#fcf8ef";
+  ctx.fillRect(0, 0, 768, 768);
+  let seed = 75;
+  const random = () =>
+    (seed = (Math.imul(1664525, seed) + 1013904223) >>> 0) / 4294967296;
+  for (let i = 0; i < 16500; i++) {
+    ctx.fillStyle =
+      i % 4 ? `rgba(90,70,60,${0.014 + random() * 0.1})` : "#ffffff88";
+    ctx.fillRect(
+      random() * 768,
+      random() * 768,
+      1 + random() * 3.1,
+      1 + random() * 1.5,
+    );
+  }
+  for (let y = 72; y < 768; y += 126) {
+    const shade = ctx.createLinearGradient(0, y - 12, 0, y + 17);
+    shade.addColorStop(0, "#82594400");
+    shade.addColorStop(0.46, "#82594460");
+    shade.addColorStop(0.57, "#ffffffdf");
+    shade.addColorStop(1, "#ffffff00");
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, y - 12, 768, 29);
+    ctx.fillStyle = "#4b3529a0";
+    ctx.fillRect(0, y, 768, 1.3);
+    for (let x = 6; x < 768; x += 18) {
+      ctx.beginPath();
+      ctx.arc(x, y + 5, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (let i = 0; i < 88; i++) {
+    const x = random() * 768,
+      y = random() * 768;
+    ctx.strokeStyle = i % 4 ? "#64544e50" : "#ffffffbd";
+    ctx.lineWidth = 0.4 + random() * 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 1.7 + random() * 20, y - 2 - random() * 12);
+    ctx.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  enamelMap = texture;
+  return texture;
+}
+
 export function courier(ship: THREE.Group) {
-  const peach = alloy(0xe3917d, 0.33);
-  const shell = alloy(0xc47b64, 0.43);
+  const peach = new THREE.MeshPhysicalMaterial({
+    color: 0xf09f8e,
+    roughness: 0.37,
+    metalness: 0.23,
+    map: wornEnamel(),
+    clearcoat: 0.75,
+    clearcoatRoughness: 0.24,
+  });
+  const shell = alloy(0xd78973, 0.39);
+  shell.map = wornEnamel();
   const brass = alloy(0xb18750, 0.32);
   const trim = alloy(0x563a29, 0.55);
   const smoke = new THREE.MeshPhysicalMaterial({
@@ -281,7 +365,8 @@ export function stormPylon(group: THREE.Group, side: number) {
 }
 
 export function mothership(group: THREE.Group) {
-  const pearl = alloy(0xe4b096, 0.31);
+  const pearl = alloy(0xe6bc9e, 0.4);
+  pearl.map = wornEnamel();
   const dusk = alloy(0x503c38);
   const gold = alloy(0xa9824d);
   const blue = lamp(0xffdeb1);
@@ -299,7 +384,7 @@ export function mothership(group: THREE.Group) {
       [35, 12, 7, 35],
     ],
     pearl,
-    12,
+    36,
   );
   hullSection(
     group,
@@ -312,7 +397,7 @@ export function mothership(group: THREE.Group) {
       [7, 18, 6, 25],
     ],
     dusk,
-    10,
+    24,
   );
   for (const sign of [-1, 1]) {
     const pod = new THREE.Group();

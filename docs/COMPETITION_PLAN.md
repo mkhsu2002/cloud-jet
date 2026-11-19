@@ -25,7 +25,7 @@ WebStorm activation and interactive verification for the two-bend rescue are com
 
 **Historical checkpoint, 2026-11-19.** Last Light is the ranked five-turn convoy mission. The final three turns add cargo charge, clean entry with an existing escort, and recentering before the lighthouse. Rescued ships appear in the arrival sequence. The local board ranks ship count first, then delivery time. The two-turn route remains available for practice. See DEVELOPMENT_LOG.md and QA_V2.md for verification.
 
-**Current game, 2026-11-19.** Cloud Jet: Ascent replaces the rescue mission. Players must cross five independently timed gates to dock at an alien mothership. A miss ends the run. The booth flow retains the one-button input and quick handoff. The release evidence is in QA_ASCENT.md.
+**Current game, 2026-11-19.** Cloud Jet: Ascent replaces the rescue mission. Players must cross five independently timed gates to dock at an alien mothership. A miss ends the run. The booth flow retains the one-button input and quick handoff. The release evidence is in QA_ASCENT.md. Cloud9 remains the current priority. Steam commercial development is deferred until after the competition.
 
 ## Verified competition facts and remaining checks
 

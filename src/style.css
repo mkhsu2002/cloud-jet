@@ -989,14 +989,14 @@ body.racing .cue {
   opacity: 0;
 }
 body.falling .fall-mist {
-  animation: cloudfall 2.2s ease-in both;
+  animation: cloudfall 2.7s ease-in both;
 }
 @keyframes cloudfall {
   0%,
-  22% {
+  38% {
     opacity: 0;
   }
-  76% {
+  82% {
     opacity: 0.82;
   }
   100% {
@@ -1034,4 +1034,8 @@ body:not(.racing) .vignette {
     border-radius: 7px;
     padding: 16px;
   }
+}
+
+body.falling .arrival {
+  bottom: 5%;
 }

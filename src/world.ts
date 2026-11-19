@@ -1,7 +1,9 @@
 import { GATES } from "./ascent";
+import { collapsePose } from "./deck-collapse";
 import { buildAscentScenery } from "./ascent-scenery";
 import { boostShot } from "./boost-presentation";
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { COURSE, type RaceState, type Track } from "./simulation";
 import { sampleTrack, curvature } from "./track";
 import { courier, dock, stormPylon, deckTexture } from "./art";
@@ -38,6 +40,11 @@ export class World {
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(60, 1, 0.2, 4800);
   private courseGroup = new THREE.Group();
+  private deckPanels: { from: number; to: number; group: THREE.Group }[] = [];
+  private fallingPanels?: {
+    pivot: THREE.Vector3;
+    panels: { group: THREE.Group; rest: THREE.Vector3 }[];
+  };
   private environment = new THREE.Group();
   private ship = new THREE.Group();
   private driveTrails: {
@@ -94,12 +101,21 @@ export class World {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.17;
+    const environment = new RoomEnvironment();
+    const reflectionGenerator = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = reflectionGenerator.fromScene(
+      environment,
+      0.08,
+    ).texture;
+    this.scene.environmentIntensity = 0.55;
+    environment.dispose();
+    reflectionGenerator.dispose();
     this.scene.fog = new THREE.FogExp2(0xf2cdb9, 0.00022);
-    this.scene.add(new THREE.HemisphereLight(0xffefe0, 0x74617b, 2.45));
-    const sun = new THREE.DirectionalLight(0xffddae, 3.5);
-    sun.position.set(-100, 250, -300);
+    this.scene.add(new THREE.HemisphereLight(0xffefe0, 0x74617b, 1.65));
+    const sun = new THREE.DirectionalLight(0xffddae, 3.1);
+    sun.position.set(-220, 170, -135);
     this.scene.add(sun);
-    const rim = new THREE.DirectionalLight(0xc0d9ff, 2.05);
+    const rim = new THREE.DirectionalLight(0xc0d9ff, 1.6);
     rim.position.set(180, 60, 50);
     this.scene.add(rim);
     this.scene.add(this.courseGroup, this.environment, this.ship);
@@ -194,42 +210,9 @@ export class World {
     this.skyline.clear();
     this.roadFlow.clear();
     this.arrivalTime = 0;
-    const uv: number[] = [];
-    const vertices: number[] = [],
-      indices: number[] = [];
-    const railPoints: [THREE.Vector3[], THREE.Vector3[]] = [[], []];
-    const count = Math.ceil((track.length + 200) / 4);
-    for (let i = 0; i <= count; i++) {
-      const d = i * 4 - 80;
-      const l = offset(d, -7, track),
-        r = offset(d, 7, track);
-      vertices.push(l.x, l.y, l.z, r.x, r.y, r.z);
-      uv.push(0, d / 24, 1, d / 24);
-      railPoints[0].push(l.clone().add(new THREE.Vector3(0, 0.2, 0)));
-      railPoints[1].push(r.clone().add(new THREE.Vector3(0, 0.2, 0)));
-      if (i < count) {
-        const n = i * 2;
-        indices.push(n, n + 1, n + 2, n + 1, n + 3, n + 2);
-      }
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(vertices, 3),
-    );
-    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    this.courseGroup.add(new THREE.Mesh(geometry, this.roadMat));
-    for (const pts of railPoints) {
-      const curve = new THREE.CatmullRomCurve3(pts);
-      this.courseGroup.add(
-        new THREE.Mesh(
-          new THREE.TubeGeometry(curve, count, 0.09, 4, false),
-          this.cyan,
-        ),
-      );
-    }
+    this.deckPanels = [];
+    this.fallingPanels = undefined;
+    this.buildDeck(track);
     for (let d = 0; d < track.length; d += 20) {
       for (const side of [-1, 1]) {
         const p = offset(d, side * 6.4, track);
@@ -244,6 +227,7 @@ export class World {
           this.hull,
         );
         bar.rotation.y = Math.atan2(-tangent(d, track).x, -tangent(d, track).z);
+        this.attachToDeck(bar, d);
       }
       if (d % 40 === 0) {
         const p = center(d, track);
@@ -261,6 +245,7 @@ export class World {
           -tangent(d, track).x,
           -tangent(d, track).z,
         );
+        this.attachToDeck(dash, d);
       }
     }
     track.corners.forEach((c, i) => {
@@ -304,6 +289,89 @@ export class World {
     }
     this.roadFlow.add(roadTicks);
   }
+  private buildDeck(track: Track) {
+    const end = Math.ceil((track.length + 120) / 4) * 4;
+    for (let from = -80; from < end; from += 28) {
+      const to = Math.min(end, from + 28);
+      const group = new THREE.Group();
+      group.position.copy(center((from + to) / 2, track));
+      const vertices: number[] = [];
+      const uv: number[] = [];
+      const top: number[] = [];
+      const shell: number[] = [];
+      const rails: [THREE.Vector3[], THREE.Vector3[]] = [[], []];
+      for (let d = from; d <= to; d += 4) {
+        const left = offset(d, -7, track).sub(group.position);
+        const right = offset(d, 7, track).sub(group.position);
+        vertices.push(left.x, left.y, left.z, right.x, right.y, right.z);
+        vertices.push(
+          left.x,
+          left.y - 0.75,
+          left.z,
+          right.x,
+          right.y - 0.75,
+          right.z,
+        );
+        uv.push(0, d / 24, 1, d / 24, 0, d / 24, 1, d / 24);
+        rails[0].push(left.clone().add(new THREE.Vector3(0, 0.2, 0)));
+        rails[1].push(right.clone().add(new THREE.Vector3(0, 0.2, 0)));
+        const i = d - from;
+        if (d < to) {
+          top.push(i, i + 1, i + 4, i + 1, i + 5, i + 4);
+          shell.push(i, i + 4, i + 2, i + 2, i + 4, i + 6);
+          shell.push(i + 1, i + 3, i + 5, i + 3, i + 7, i + 5);
+          shell.push(i + 2, i + 6, i + 3, i + 3, i + 6, i + 7);
+        }
+      }
+      const last = to - from;
+      shell.push(
+        0,
+        2,
+        1,
+        1,
+        2,
+        3,
+        last,
+        last + 1,
+        last + 2,
+        last + 1,
+        last + 3,
+        last + 2,
+      );
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(vertices, 3),
+      );
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      geometry.setIndex([...top, ...shell]);
+      geometry.addGroup(0, top.length, 0);
+      geometry.addGroup(top.length, shell.length, 1);
+      geometry.computeVertexNormals();
+      group.add(new THREE.Mesh(geometry, [this.roadMat, this.concrete]));
+      for (const route of rails)
+        group.add(
+          new THREE.Mesh(
+            new THREE.TubeGeometry(
+              new THREE.CatmullRomCurve3(route),
+              (to - from) / 2,
+              0.09,
+              4,
+              false,
+            ),
+            this.cyan,
+          ),
+        );
+      this.deckPanels.push({ from, to, group });
+      this.courseGroup.add(group);
+    }
+  }
+  private attachToDeck(object: THREE.Object3D, distance: number) {
+    const panel = this.deckPanels.find(
+      ({ from, to }) => distance >= from && distance < to,
+    );
+    if (panel) panel.group.attach(object);
+  }
   private gate(d: number, label: string, mat: THREE.Material) {
     const group = new THREE.Group();
     const p = center(d, this.track);
@@ -340,12 +408,22 @@ export class World {
     this.courseGroup.add(group);
   }
   private buildSky() {
+    const uniforms = {
+      altitude: { value: 0 },
+      panorama: { value: new THREE.Texture() },
+      panoramaReady: { value: 0 },
+    };
+    new THREE.TextureLoader().load("/scenery/cloud-sea.webp", (texture) => {
+      texture.wrapS = THREE.MirroredRepeatWrapping;
+      uniforms.panorama.value = texture;
+      uniforms.panoramaReady.value = 1;
+    });
     const material = new THREE.ShaderMaterial({
-      uniforms: { altitude: { value: 0 } },
+      uniforms,
       side: THREE.BackSide,
       depthWrite: false,
       vertexShader: `varying vec3 vWorld; void main(){ vWorld=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-      fragmentShader: `varying vec3 vWorld; uniform float altitude;
+      fragmentShader: `varying vec3 vWorld; uniform float altitude; uniform sampler2D panorama; uniform float panoramaReady;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
       return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
@@ -362,6 +440,15 @@ export class World {
       float sea=(1.-smoothstep(-.20,.035,h));
       vec3 clouds=mix(vec3(.76,.64,.69),vec3(1.,.94,.81),smoothstep(.32,1.15,n));
       sky=mix(sky,clouds,sea);
+      if (panoramaReady > 0.5) {
+        float yaw=atan(d.x,-d.z);
+        float u=.34+yaw*.39;
+        float v=.515+asin(h)*1.04+altitude*.17;
+        vec3 plate=texture2D(panorama,vec2(u,clamp(v,.02,.98))).rgb;
+        vec3 highPlate=mix(plate,vec3(.24,.28,.48)*max(plate.b,.2),smoothstep(.02,.60,h)*altitude*.84);
+        float blend=smoothstep(.018,.15,v)*(1.-smoothstep(.92,.99,v));
+        sky=mix(sky,highPlate,blend*.97);
+      }
       float star=step(.998,hash(floor(d.xz*460.)));
       sky+=vec3(.5,.54,.63)*star*altitude*smoothstep(.11,.4,h)*.75;
       gl_FragColor=vec4(sky,1.);
@@ -444,6 +531,8 @@ export class World {
           harbor ? this.windows : this.cyan,
         );
         lamp.rotation.y = -heading;
+        this.attachToDeck(riser, d);
+        this.attachToDeck(lamp, d);
         if (d % 33 === 14 && harbor) {
           const structure = new THREE.Group();
           structure.position.copy(offset(d, side * (15.7 + (d % 4)), track));
@@ -575,12 +664,12 @@ export class World {
       s.thrust,
       this.low || this.classic,
     );
-    this.roadFlow.visible = !this.classic;
+    this.roadFlow.visible = !this.classic && !s.failed;
 
     const terminal = delivered || s.failed;
     this.arrivalTime = terminal ? this.arrivalTime + elapsed : 0;
     const reveal = THREE.MathUtils.smoothstep(this.arrivalTime, 0, 2.35);
-    const fall = s.failed ? Math.min(118, this.arrivalTime ** 2 * 30) : 0;
+
     if (active && !this.lastPhase) this.lastDistance = -1;
     this.lastPhase = active;
     const d = active ? s.distance : 19 + Math.sin(time * 0.08) * 8;
@@ -616,19 +705,57 @@ export class World {
           0,
         ),
       );
-    this.ship.position.y -= fall;
     if (delivered)
       this.ship.position.addScaledVector(tangent(d, this.track), 43 * reveal);
     const dir = tangent(d, this.track);
     const yaw = Math.atan2(-dir.x, -dir.z);
     const bank = curvature(this.track, d) * 12;
     this.ship.rotation.set(
-      s.failed
-        ? -reveal * 0.78
-        : -s.thrust * Number(s.boostRemaining > 0) * 0.1,
+      -s.thrust * Number(s.boostRemaining > 0) * 0.1,
       yaw - s.slip,
-      s.failed ? reveal * 1.05 : bank - s.slip * 0.6,
+      bank - s.slip * 0.6,
     );
+    if (s.failed) {
+      this.fallingPanels ??= {
+        pivot: center(d, this.track),
+        panels: this.deckPanels
+          .filter(({ from, to }) => d + 5 >= from && d - 5 < to)
+          .map(({ group }) => ({ group, rest: group.position.clone() })),
+      };
+      const { pivot, panels } = this.fallingPanels;
+      const pose = collapsePose(this.arrivalTime, s.lateral);
+      const deckRotation = new THREE.Quaternion().setFromAxisAngle(
+        dir,
+        pose.deckRoll,
+      );
+      const podRotation = new THREE.Quaternion().setFromAxisAngle(
+        dir,
+        pose.podRoll,
+      );
+      const right = new THREE.Vector3(-dir.z, 0, dir.x);
+      for (const { group, rest } of panels) {
+        group.quaternion.copy(deckRotation);
+        group.position
+          .copy(rest)
+          .sub(pivot)
+          .applyQuaternion(deckRotation)
+          .add(pivot);
+      }
+      // Follow the metal until the pod has cleared the edge, then keep its release angle.
+      this.ship.position.copy(offset(d, pose.lateral, this.track));
+      this.ship.position.y += 1.05;
+      this.ship.position.sub(pivot).applyQuaternion(podRotation).add(pivot);
+      this.ship.position.addScaledVector(right, pose.driftOut);
+      this.ship.position.y -= pose.drop;
+      this.ship.quaternion.premultiply(podRotation);
+      this.ship.rotateX(-Math.min(0.55, pose.drop * 0.017));
+    } else if (this.fallingPanels) {
+      for (const { group, rest } of this.fallingPanels.panels) {
+        group.quaternion.identity();
+        group.position.copy(rest);
+      }
+      this.fallingPanels = undefined;
+    }
     const pushing = s.boostRemaining > 0 ? s.thrust : 0;
     this.pitchVelocity +=
       (pushing - this.pitchVelocity) * (1 - Math.exp(-elapsed * 10));
@@ -654,8 +781,12 @@ export class World {
             ? 11.8 + this.pitchVelocity * 7.2
             : 11.8
           : 19);
-    const side = delivered ? -15 - reveal * 23 : active ? s.lateral * 0.7 : -14;
-    const height = delivered ? 10 + reveal * 18 : active ? 4.25 : 7;
+    const side = delivered
+      ? -24 - reveal * 87
+      : active
+        ? s.lateral * 0.72 - 1.6
+        : -14;
+    const height = delivered ? 18 + reveal * 62 : active ? 4.8 : 7;
     const cam = offset(cameraD, side, this.track).add(
       new THREE.Vector3(0, height, 0),
     );
@@ -663,12 +794,16 @@ export class World {
     target.y += active ? 3.3 : 9;
     if (delivered && this.orbital)
       target.lerp(
-        this.orbital.dock.position.clone().add(new THREE.Vector3(0, 25, 0)),
-        0.72,
+        this.orbital.dock.position
+          .clone()
+          .add(new THREE.Vector3(0, 42 + reveal * 17, 0))
+          .addScaledVector(dir, 60 * reveal),
+        0.86,
       );
     if (s.failed) {
-      cam.copy(offset(d - 21, -6, this.track));
-      cam.y = this.ship.position.y + 7;
+      const slideSide = s.lateral < -0.25 ? -1 : 1;
+      cam.copy(offset(d - 17, slideSide * 16, this.track));
+      cam.y = this.ship.position.y + 8.5;
       target.copy(this.ship.position).addScaledVector(dir, 3);
       target.y -= 1;
     }

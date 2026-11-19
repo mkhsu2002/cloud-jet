@@ -270,7 +270,7 @@ function frame(now: number) {
         ? "Gate closed"
         : "Docking corridor reached";
       byId("arrival-line").textContent = s.failed
-        ? "Lift lost. Descending into the cloud sea."
+        ? "The track gave way. Descending into the cloud sea."
         : "Five gates cleared.";
       byId("arrival").hidden = false;
       byId("hud").hidden = true;
@@ -280,8 +280,8 @@ function frame(now: number) {
   }
   if (phase === "finished" && !byId("arrival").hidden) {
     const since = now - arrivalAt;
-    if (since >= (s.failed ? 2450 : 3800)) finish();
-    else if (since >= (s.failed ? 1200 : 800)) {
+    if (since >= (s.failed ? 3000 : 3800)) finish();
+    else if (since >= (s.failed ? 1650 : 800)) {
       byId("arrival-results").hidden = false;
       if (!s.failed) byId("arrival-stage").textContent = "Mothership reached";
     }
