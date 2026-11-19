@@ -1,25 +1,16 @@
-# Cloud Jet: Last Light
+# Cloud Jet: Ascent
 
-**One button. Five turns. Nine ships to bring home.**
-
-FlyPig’s browser arcade game about a courier carrying a beacon ignition core through a storm. Hold to drift through a bend, release to accelerate and restore the navigation light that guides the fleet home.
-
-The v2 mission replaces the original time-trial prototype. See the [v2 redesign](docs/UPGRADE_V2.md) and [verification record](docs/QA_V2.md).
+A one-button browser flight through five timed gates to an alien mothership above the atmosphere.
 
 ## Play
 
-**[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA_V2.md) for verified checks and limitations.
+[Launch Cloud Jet](https://cloud-jet.pages.dev/) in a modern browser with WebGL 2 and hardware acceleration. No sign-in is required.
 
-- **Last Light**: a ranked 2,450 m convoy rescue with five corners and up to nine ships. Charge for the hauler, bring an escort into the fourth turn and recenter to guide the final pair. Watch the rescued ships return in the beacon arrival scene.
-- **Two rescue turns**: an unranked introduction. Charge the harbor relay for one ship, then release early in the storm to guide one ship or hold for the later pair.
-- **Harbor Shakedown**: a 920 m single-corner practice course.
-- **Compare harbor flights**: two playable views of the same harbor turn with the speed display and boost text hidden. Comparison flights have their own replay flow and do not write the local leaderboard.
-- Wait for **HOLD NOW**, press and hold **Space**, and release on the highlighted relay cue. In harbor practice, release on the exit cue. The on-screen button supports the same mouse and touch action.
-- Entry timing changes the racing line and energy buildup; release timing changes exit acceleration. Poor lines can graze the wall and slow you down.
-- On the mission results, choose **Next pilot · flight briefing** or press Space to hand over. The next pilot starts with zero ships, and the device keeps its records.
-- Convoy records rank by ships guided home, then by fastest delivery. This browser stores records per course version. Harbor practice keeps its own time records.
-- The first flight enables sound after an interaction. Use Sound to toggle it. Low effects reduces scenery and camera effects; reduced-motion preference enables it automatically.
-- Leaving the window or suspending the tab interrupts the attempt. Start a fresh flight to set a time.
+- Wait for **HOLD NOW**, hold Space to drift, and let go on **RELEASE NOW** for boost. The on-screen button accepts the same hold-and-release input.
+- Each gate has its own countdown. Cross it before zero to start the next sector. A missed gate ends the flight in the cloud sea. The fifth gate leads to the mothership dock.
+- The device leaderboard records completed flights by time. At results, **Next pilot · flight briefing** hands off to the next player and **Fly again** starts a fresh attempt.
+- Harbor Shakedown is an untimed one-turn practice flight. The optional harbor A/B comparison masks its speed and boost labels and skips leaderboard writes.
+- Sound starts after a gesture. Low effects reduces scene density and camera movement. Leaving the active window interrupts the flight.
 
 ## Run locally
 
@@ -43,28 +34,19 @@ Visit http://127.0.0.1:4173. All browser assets are bundled. The offline server 
 
 ## Architecture
 
-TypeScript + Vite + Three.js, plain HTML/CSS overlays, synthesized Web Audio and localStorage. No backend, accounts, telemetry or runtime third-party API is used.
+TypeScript, Vite and Three.js with Web Audio and device-local records. The game runs statically with no accounts, backend or telemetry.
 
-- `src/simulation.ts`: deterministic 120 Hz race simulation, timestamped input, drift/boost energy, speed, wall contact and finish time.
-- `src/rescue.ts`: relay windows, rescue criteria and pilot cues.
-- `src/session.ts`: countdown, racing, finish and interruption lifecycle.
-- `src/track.ts`: shared sampled track geometry and curvature.
-- `src/art.ts`: original courier, loading docks, storm pylons, lighthouse and convoy models, plus the deck texture.
-- `src/world.ts`: scene construction, navigation signs, chase camera, boost plumes and arrival animation.
-- `src/main.ts`: keyboard/pointer interaction, accessible UI, results and display settings.
-- `src/records.ts`: validated local records and graceful storage failure.
-- `src/audio.ts`: bundled original score and layered vehicle and cue synthesis.
-- `tests/`: timing, recovery, frame-rate replay, reset, lifecycle and storage tests.
+- `src/ascent.ts` defines the five gate budgets and cue timing. `src/simulation.ts` resolves movement and deadlines at 120 Hz.
+- `src/track.ts` samples banked bends and elevation. `src/ascent-scenery.ts` builds the five stage environments, gates and dock.
+- `src/art.ts` contains the player pod, mothership and materials. `src/world.ts` handles rendering, chase camera, boost, descent and docking.
+- `src/session.ts`, `src/main.ts` and `src/records.ts` handle input, game flow and local timing records.
+- `src/audio.ts` mixes the bundled score, engine and gameplay cues. `scripts/compose.mjs` synthesizes the stereo score.
 
-Rendering does not decide timing quality. Input replays are tested across 30/60/120 fps render schedules; device latency still depends on the actual hardware. CI runs only for game/build/test-related changes, with concurrency cancellation. Documentation-only changes do not trigger a full build or deployment. Public deployment is a deliberate direct-upload release, not triggered by every Git push.
+GitHub Actions runs the build and tests on changes to game, test and build files. Production is deployed directly after verification.
 
 ## Competition and tool evidence
 
-Prepared for **Category 3: Event Mini Game** of the [Cloud9 × JetBrains Sky's the Limit Hackathon](https://cloud9.devpost.com/rules). This is an independent project, not an official Cloud9 or JetBrains product or endorsement. Eligibility, current category specifics and final submission remain separate checks.
-
-Codex assists implementation. WebStorm 2026.3 performed offline project inspections and later ran the Convoy Rescue regressions in its Run window. Its debugger traced early, late and missed releases and replay reset, then diagnosed the fifth-turn alignment gate. The full mission regression ran in the IDE. See the [development log](docs/DEVELOPMENT_LOG.md), [JetBrains workflow](docs/JETBRAINS.md) and [current QA status](docs/QA_V2.md).
-
-The [competition plan](docs/COMPETITION_PLAN.md) records the two-day scope. The earlier multi-week delivery proposal was superseded on November 19, 2026. This repository now contains a runnable game; older setup-only entries in the development log are historical checkpoints.
+Prepared for Category 3, Event Mini Game, of the [Cloud9 × JetBrains Sky's the Limit Hackathon](https://cloud9.devpost.com/rules). See the [development log](docs/DEVELOPMENT_LOG.md), [Ascent verification](docs/QA_ASCENT.md) and [booth operation notes](docs/BOOTH.md).
 
 ## License
 

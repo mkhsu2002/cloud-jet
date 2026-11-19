@@ -1,18 +1,22 @@
 import { writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-// Original 32-bar score. Four harmonic phrases share a returning courier theme.
-const rate = 32000;
-const beat = 60 / 136;
+// Original stereo score for the ascent. A brass motif rises over expanding harmonies.
+const rate = 44100;
+const beat = 60 / 126;
 const frames = Math.round(128 * beat * rate);
 const left = new Float32Array(frames);
 const right = new Float32Array(frames);
 const tau = 2 * Math.PI;
 const notes = [
-  [45, 52, 57, 60, 64],
-  [41, 48, 53, 57, 64],
-  [48, 55, 60, 64, 67],
-  [43, 50, 55, 59, 62],
+  [50, 57, 62, 66, 69],
+  [47, 54, 59, 62, 66],
+  [43, 50, 55, 59, 64],
+  [45, 52, 57, 61, 64],
+  [54, 61, 66, 69, 73],
+  [50, 57, 62, 66, 71],
+  [52, 59, 64, 68, 71],
+  [45, 52, 57, 61, 69],
 ];
 let seed = 93;
 function noise() {
@@ -31,20 +35,31 @@ function add(at, length, pan, voice) {
 function tone(at, duration, midi, gain, pan, timbre) {
   const hz = 440 * 2 ** ((midi - 69) / 12);
   const pad = timbre === "pad";
+  const brass = timbre === "brass";
   add(at, duration, pan, (t) => {
     const p = tau * hz * t;
     const envelope = Math.min(
       1,
-      t / (pad ? 0.3 : 0.013),
-      (duration - t) / (pad ? 0.48 : 0.12),
+      t / (pad ? 0.3 : brass ? 0.13 : 0.013),
+      (duration - t) / (pad ? 0.48 : brass ? 0.24 : 0.12),
     );
     const wave = pad
       ? 0.6 * Math.sin(p) +
         0.25 * Math.sin(p * 1.003 + 0.8) +
         0.15 * Math.sin(2 * p)
-      : Math.sin(p + 0.6 * Math.exp(-8 * t) * Math.sin(2 * p)) +
-        0.22 * Math.sin(p * 2);
-    return gain * Math.max(0, envelope) * wave * (pad ? 1 : Math.exp(-2.5 * t));
+      : brass
+        ? 0.69 * Math.sin(p + 0.15 * Math.sin(31 * t)) +
+          0.3 * Math.sin(p * 2.006) +
+          0.16 * Math.sin(p * 3) +
+          0.08 * Math.sin(p * 5.009)
+        : Math.sin(p + 0.6 * Math.exp(-8 * t) * Math.sin(2 * p)) +
+          0.22 * Math.sin(p * 2);
+    return (
+      gain *
+      Math.max(0, envelope) *
+      wave *
+      (pad || brass ? 1 : Math.exp(-2.5 * t))
+    );
   });
 }
 const motif = [
@@ -56,7 +71,7 @@ const motif = [
 ];
 for (let bar = 0; bar < 32; bar++) {
   const b = bar * 4,
-    chord = notes[bar % 4];
+    chord = notes[bar % (bar >= 12 && bar < 28 ? 8 : 4)];
   const drive = bar >= 4 && bar < 28;
   chord
     .slice(1)
@@ -110,6 +125,25 @@ for (let bar = 0; bar < 32; bar++) {
             (noise() + 0.35 * Math.sin(tau * 164 * t)),
         );
     }
+  if (bar >= 6) {
+    tone(b, beat * 2.4, chord[2] + 12, 0.06, 0.42, "brass");
+    tone(b + 2.5, beat * 1.5, chord[3] + 12, 0.058, 0.59, "brass");
+    if (bar >= 15) {
+      tone(b + 0.1, beat * 3.7, chord[0] + 12, 0.04, 0.26, "brass");
+      tone(b + 1.9, beat * 1.8, chord[4] + 12, 0.028, 0.74, "brass");
+    }
+  }
+  if (bar % 8 === 7)
+    add(
+      b + 2,
+      beat * 2.4,
+      0.5,
+      (t) =>
+        0.1 *
+        Math.min(1, t / 0.76) *
+        Math.max(0, 1 - (t / (beat * 2.4)) ** 5) *
+        noise(),
+    );
   if (bar % 4 !== 3 || bar >= 24)
     for (const [offset, n] of motif) {
       tone(
@@ -169,4 +203,4 @@ const encoded = spawnSync(
 );
 if (encoded.status !== 0)
   throw Error(encoded.stderr?.toString() || "ffmpeg is required.");
-writeFileSync("public/audio/last-light.ogg", encoded.stdout);
+writeFileSync("public/audio/ascent.ogg", encoded.stdout);

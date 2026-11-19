@@ -1,5 +1,6 @@
 # MVP delivery status
 
+**Archived 2026-11-19.** This records the earlier Cloud Jet build. The current game is Ascent. See [current verification](QA_ASCENT.md).
 Updated: 2026-11-19. This replaces the pre-implementation MVP plan; use QA.md for actual check results.
 
 ## Experience status

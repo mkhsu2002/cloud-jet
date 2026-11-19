@@ -1,35 +1,23 @@
 import "./style.css";
 import { World } from "./world";
 import { Session } from "./session";
-import {
-  COURSE,
-  PRACTICE,
-  RESCUE,
-  rescueCapacity,
-  type Track,
-} from "./simulation";
+import { COURSE, PRACTICE, type Track } from "./simulation";
 import { readRecords, saveRecord, compareRecords, type Store } from "./records";
 import { AudioEngine } from "./audio";
-import {
-  approachCue,
-  relayBriefs,
-  relayChecks,
-  rescueCue,
-  rescuedTotal,
-} from "./rescue";
+import { GATES, approachCue, releaseCue } from "./ascent";
 const byId = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const params = new URLSearchParams(location.search);
-const rescue = params.get("mission") === "rescue";
-const requestedFlight = rescue ? null : params.get("flight");
+const requestedFlight = params.get("flight");
 const comparison = requestedFlight === "A" || requestedFlight === "B";
 const classic = requestedFlight === "A";
-const exhibition = rescue || comparison;
 let lastBoostCount = 0;
+let lastGate = 0;
+let warning = false;
 const session = new Session(),
   audio = new AudioEngine();
 let world: World;
-let selected: Track = rescue ? RESCUE : COURSE;
+let selected: Track = COURSE;
 let arrivalAt = 0;
 let lastPhase = "ready",
   lastFrame = performance.now(),
@@ -50,14 +38,12 @@ function setLow(value: boolean) {
   byId("effects").setAttribute("aria-pressed", String(low));
 }
 function start(track = selected) {
-  if (rescue) track = RESCUE;
-  else if (comparison) track = PRACTICE;
+  if (comparison) track = PRACTICE;
   if (session.phase === "racing" || session.phase === "countdown") return;
   selected = track;
   arrivalAt = 0;
   byId("arrival").hidden = true;
   byId("arrival-results").hidden = true;
-  byId("relay-guide").hidden = true;
   if (!audio.enabled && !soundChosen) void toggleAudio(true);
   held = false;
   byId("drift").classList.remove("active");
@@ -65,25 +51,16 @@ function start(track = selected) {
   world.setTrack(track);
   lastFeedback = -10;
   lastBoostCount = 0;
+  lastGate = 0;
+  warning = false;
+  document.body.classList.remove("falling");
   byId("home").hidden = true;
   byId("home-instructions").hidden = true;
   byId("footer").hidden = true;
   byId("hud").hidden = false;
   byId("results").hidden = true;
   byId("paused").hidden = true;
-  const mission = rescueCapacity(track) > 0;
-  byId("rescued-live").hidden = !mission;
-  byId("rescue-results").hidden = !mission;
-  byId("race-results").hidden = mission;
-  byId("drift-action").textContent = mission
-    ? "RELEASE TO OPEN RELAY"
-    : "RELEASE TO BOOST";
-  byId("drift").setAttribute(
-    "aria-label",
-    mission
-      ? "Hold to charge the relay, release to open it"
-      : "Hold to drift, release to boost",
-  );
+  byId("gate-panel").hidden = track !== COURSE;
   byId("track-name").textContent = track.name.toUpperCase();
   document.body.classList.add("racing");
   byId("drift").focus({ preventScroll: true });
@@ -91,15 +68,15 @@ function start(track = selected) {
 function home() {
   session.goHome();
   byId("arrival").hidden = true;
-  byId("relay-guide").hidden = true;
-  selected = rescue ? RESCUE : comparison ? PRACTICE : COURSE;
+  selected = comparison ? PRACTICE : COURSE;
+  document.body.classList.remove("falling");
   held = false;
   world.setTrack(selected);
   byId("hud").hidden = true;
   byId("results").hidden = true;
   byId("paused").hidden = true;
   byId("home").hidden = false;
-  byId("home-instructions").hidden = rescue;
+  byId("home-instructions").hidden = false;
   byId("footer").hidden = false;
   document.body.classList.remove("racing");
   byId(comparison ? "practice" : "race").focus();
@@ -208,60 +185,49 @@ document.addEventListener("visibilitychange", () => {
 function finish() {
   if (session.phase !== "finished" || !byId("results").hidden) return;
   const s = session.sim.state;
-  const capacity = rescueCapacity(selected);
-  const ships = rescuedTotal(s.rescues);
-  const best = exhibition ? undefined : readRecords(store, selected.id)[0];
+  const mission = selected === COURSE;
+  const best = comparison ? undefined : readRecords(store, selected.id)[0];
   const entry = {
     time: s.time,
     perfects: s.perfects,
     date: new Date().toISOString().slice(0, 10),
-    ships: capacity ? ships : undefined,
   };
-  const saved = !exhibition && saveRecord(store, selected.id, entry);
+  const saved =
+    !comparison && !s.failed && saveRecord(store, selected.id, entry);
   byId("hud").hidden = true;
   byId("results").hidden = false;
-  byId("replay-mission").hidden = selected !== COURSE;
-  byId("back").hidden = selected === COURSE;
-  if (!exhibition)
-    byId("again").textContent =
-      selected === COURSE ? "Next pilot · flight briefing" : "Practice again";
+  byId("replay-mission").hidden = !mission;
+  byId("back").hidden = mission;
+  if (!comparison)
+    byId("again").textContent = mission
+      ? "Next pilot · flight briefing"
+      : "Practice again";
   byId("result-time").textContent = formatTime(s.time);
-  byId("result-eyebrow").textContent =
-    selected === RESCUE
-      ? "CONVOY RESCUE COMPLETE"
-      : selected === PRACTICE
-        ? "HARBOR PRACTICE COMPLETE"
-        : "BEACON ONLINE";
-  byId("result-title").textContent = capacity
-    ? ships + " of " + capacity + " ships guided home."
-    : "Ready for the real flight.";
+  byId("result-eyebrow").textContent = !mission
+    ? "PRACTICE COMPLETE"
+    : s.failed
+      ? "MISSION FAILED"
+      : "MISSION COMPLETE";
+  byId("result-title").textContent = !mission
+    ? "Ready for the ascent."
+    : s.failed
+      ? "Lost in the cloud sea"
+      : "Docked at the mothership";
   byId("arrival").hidden = true;
-  if (capacity) {
-    byId("rescue-results").textContent = s.rescues
-      .map((value, index) => selected.corners[index].name + ": " + (value ?? 0))
-      .join(" · ");
-  }
+  byId("sector-results").hidden = !mission;
+  if (mission)
+    byId("sector-results").textContent =
+      `${s.gatesCleared} / ${GATES.length} gates cleared` +
+      (s.failed ? ` · ${GATES[s.gatesCleared].name} closed` : "");
   byId("personal-best").textContent = comparison
     ? "Try the other flight through the same turn."
-    : rescue
-      ? "Try a different release on your next flight."
+    : s.failed
+      ? "Release at the exit for a stronger boost."
       : !saved
-        ? "Finished! Local records could not be saved."
-        : best === undefined
-          ? capacity
-            ? "First convoy record on this device."
-            : "First harbor time on this device."
-          : compareRecords(entry, best) < 0
-            ? "NEW DEVICE RECORD"
-            : capacity
-              ? "Device best · " +
-                (best.ships ?? 0) +
-                " ships · " +
-                formatTime(best.time)
-              : formatTime(best.time) + " is the fastest time on this device.";
-  byId("leaderboard-name").textContent = capacity
-    ? "CONVOY RECORDS"
-    : "FASTEST FLIGHTS";
+        ? "Local records could not be saved."
+        : !best || compareRecords(entry, best) < 0
+          ? "NEW DEVICE RECORD"
+          : `Device best · ${formatTime(best.time)}`;
   byId("result-perfect").textContent =
     `${s.perfects}/${selected.corners.length}`;
   byId("result-boost").textContent = String(s.boosts);
@@ -272,7 +238,7 @@ function finish() {
       .map((r, i) => {
         const li = document.createElement("li");
         const left = document.createElement("span");
-        left.textContent = `${String(i + 1).padStart(2, "0")}   ${capacity ? (r.ships ?? 0) + " ships" : r.date}`;
+        left.textContent = `${String(i + 1).padStart(2, "0")}   ${r.date}`;
         const right = document.createElement("span");
         right.textContent = formatTime(r.time);
         li.append(left, right);
@@ -299,36 +265,25 @@ function frame(now: number) {
   document.body.dataset.phase = phase;
   if (phase === "finished" && lastPhase !== "finished") {
     arrivalAt = now;
-    if (selected === COURSE || rescue) {
-      byId("arrival-stage").textContent = "Core delivered";
-      byId("arrival-line").textContent = "Ignition sequence started.";
+    if (selected === COURSE) {
+      byId("arrival-stage").textContent = s.failed
+        ? "Gate closed"
+        : "Docking corridor reached";
+      byId("arrival-line").textContent = s.failed
+        ? "Lift lost. Descending into the cloud sea."
+        : "Five gates cleared.";
       byId("arrival").hidden = false;
       byId("hud").hidden = true;
-      byId("relay-guide").hidden = true;
-      audio.chime("arrival");
+      document.body.classList.toggle("falling", s.failed);
+      audio.chime(s.failed ? "fall" : "arrival");
     } else finish();
   }
-  if (
-    phase === "finished" &&
-    (selected === COURSE || rescue) &&
-    !byId("arrival").hidden
-  ) {
+  if (phase === "finished" && !byId("arrival").hidden) {
     const since = now - arrivalAt;
-    if (since >= 4250) finish();
-    else if (
-      since >= 875 &&
-      byId("arrival-stage").textContent !== "Beacon online"
-    ) {
-      byId("arrival-stage").textContent = "Beacon online";
+    if (since >= (s.failed ? 2450 : 3800)) finish();
+    else if (since >= (s.failed ? 1200 : 800)) {
       byId("arrival-results").hidden = false;
-      const ships = rescuedTotal(s.rescues);
-      byId("arrival-line").textContent = s.rescues.length
-        ? ships === 0
-          ? "The signal is ready for the next convoy."
-          : ships === 1
-            ? "One ship is following the signal."
-            : ships + " ships are following the signal."
-        : "The fleet is coming home.";
+      if (!s.failed) byId("arrival-stage").textContent = "Mothership reached";
     }
   }
   if (phase === "countdown")
@@ -344,61 +299,36 @@ function frame(now: number) {
     byId("progress").style.width = `${(s.distance / selected.length) * 100}%`;
     byId("distance").textContent =
       `${Math.floor(s.distance)} / ${selected.length} M`;
-    const next = selected.corners.find((c) => s.distance < c.end + 15);
-    const inCorner = next && s.distance >= next.start;
-    byId("corner-label").textContent = next
-      ? `${inCorner ? "" : "APPROACHING "}${next.name}`
-      : "FINAL STRAIGHT";
-    let cue = "FLY IT HOME";
-    if (next)
-      cue = s.drifting
-        ? s.distance > next.end - 45
-          ? "RELEASE AT THE EXIT ↑"
-          : "HOLD YOUR LINE"
-        : approachCue(s.distance, next.start - 20, s.speed);
-    const guide = byId("relay-guide");
-    let showGuide = false;
-    if (s.rescues.length) {
-      const relay = s.rescues.indexOf(null);
-      const escorted = rescuedTotal(s.rescues);
-      byId("rescued-live").textContent =
-        `${escorted} / ${rescueCapacity(selected)} SHIPS GUIDED HOME`;
-      const turn = selected.corners[relay];
-      const approach = {
-        escorted,
-        entryQuality: s.drifting ? s.entryQuality : 0,
-        slip: s.slip,
-        lateral: s.lateral,
-      };
-      if (!turn) cue = s.drifting ? "LET GO · FLY IT HOME" : "FLY IT HOME";
-      else if (s.drifting && s.distance < turn.start - 110)
-        cue = "LET GO · NEXT TURN AHEAD";
-      else if (s.drifting)
-        cue = rescueCue(relay, s.distance, s.energy, approach);
-      else cue = approachCue(s.distance, turn.start - 20, s.speed);
-
-      if (turn && (relay === 0 || s.distance >= turn.start - 130)) {
-        showGuide = true;
-        const brief = byId("relay-brief");
-        if (brief.textContent !== relayBriefs[relay])
-          brief.textContent = relayBriefs[relay];
-        const checks = relayChecks(relay, s.energy, approach);
-        for (const [index, id] of [
-          "relay-check-a",
-          "relay-check-b",
-        ].entries()) {
-          const item = byId(id);
-          const check = checks[index];
-          item.hidden = !check;
-          if (check) {
-            const label = `${check.met ? "✓" : "○"} ${check.label}`;
-            if (item.textContent !== label) item.textContent = label;
-            item.dataset.met = String(check.met);
-          }
-        }
+    if (selected === COURSE) {
+      const gate = GATES[s.gatesCleared];
+      const left = Math.max(0, s.deadline - s.time);
+      byId("sector").textContent =
+        `GATE ${s.gatesCleared + 1} / ${GATES.length} · ${gate.name}`;
+      byId("gate-time").textContent =
+        `${(Math.ceil(left * 10) / 10).toFixed(1)} s`;
+      byId("gate-panel").classList.toggle("urgent", left <= 2);
+      const meter = byId<HTMLProgressElement>("gate-meter");
+      meter.max = gate.seconds;
+      meter.value = Math.min(left, gate.seconds);
+      if (s.gatesCleared !== lastGate) {
+        lastGate = s.gatesCleared;
+        warning = false;
+        audio.chime("gate");
       }
-    } else if (s.boostRemaining > 0) cue = comparison ? "" : "BOOSTING ↗";
-    guide.hidden = !showGuide;
+      if (!warning && left <= 2) {
+        warning = true;
+        audio.chime("warning");
+      }
+    }
+    const next = selected.corners.find((c) => s.distance < c.end + 15);
+    byId("corner-label").textContent = next ? "FLIGHT PATH" : "FINAL STRAIGHT";
+    let cue = next
+      ? s.drifting
+        ? releaseCue(s.distance, next.end - 10, s.speed)
+        : approachCue(s.distance, next.start - 20, s.speed)
+      : "FLY TO THE GATE";
+    if (!s.drifting && s.boostRemaining > 0)
+      cue = comparison ? "" : "BOOSTING ↗";
     const cueElement = byId("cue");
     if (cueElement.textContent !== cue) cueElement.textContent = cue;
     cueElement.classList.toggle(
@@ -406,14 +336,15 @@ function frame(now: number) {
       cue.startsWith("HOLD NOW") || cue.startsWith("RELEASE"),
     );
     byId("energy").style.width = `${s.energy * 100}%`;
-    byId("energy-label").textContent = s.rescues.length
-      ? "RELAY CHARGE"
-      : s.boostRemaining > 0
-        ? "EXIT SPEED"
-        : "DRIFT ENERGY";
-    byId("feedback").textContent =
-      s.time - s.feedbackAt < (s.feedback.includes("RESCUED") ? 2.4 : 1.3) &&
-      !(comparison && s.feedback.includes("BOOST"))
+    byId("energy-label").textContent = "DRIFT ENERGY";
+    const passedGate =
+      selected === COURSE &&
+      s.gatesCleared > 0 &&
+      s.deadline - s.time > GATES[s.gatesCleared].seconds - 1.15;
+    byId("feedback").textContent = passedGate
+      ? "GATE CLEARED · CLOCK RESET"
+      : s.time - s.feedbackAt < 1.25 &&
+          !(comparison && s.feedback.includes("BOOST"))
         ? s.feedback
         : "";
     if (s.boosts > lastBoostCount) {
@@ -442,36 +373,10 @@ function frame(now: number) {
 try {
   world = new World(byId<HTMLCanvasElement>("world"));
   world.setClassicBoost(classic);
-  if (rescue) {
-    document.body.classList.add("short-rescue");
-    world.setTrack(RESCUE);
-    byId("race").textContent = "Launch convoy rescue";
-    byId("practice").hidden = true;
-    byId("comparison-link").hidden = true;
-    byId("leaderboard").hidden = true;
-    byId("race-results").hidden = true;
-    byId("rescue-results").hidden = false;
-    byId("rescued-live").hidden = false;
-    byId("energy-label").textContent = "RELAY CHARGE";
-    byId("drift-action").textContent = "RELEASE TO OPEN RELAY";
-    byId("drift").setAttribute(
-      "aria-label",
-      "Hold to charge the relay, release to open it",
-    );
-    byId("again").textContent = "Fly the rescue again";
-    byId<HTMLAnchorElement>("rescue-link").href = "./";
-    byId("rescue-link").textContent = "Back to Last Light ↗";
-    document.querySelector("#home h1")!.textContent = "CONVOY RESCUE";
-    document.querySelector("#home .intro")!.textContent =
-      "Guide three ships home. Hold Space through each turn to charge the relay. Release when the ships enter its window.";
-    document.querySelector<HTMLElement>("#home .course-summary")!.hidden = true;
-    document.querySelector<HTMLElement>("#home-instructions")!.hidden = true;
-  }
   if (comparison) {
     selected = PRACTICE;
     world.setTrack(PRACTICE);
     byId("race").hidden = true;
-    byId("rescue-link").hidden = true;
     byId("speed-block").hidden = true;
     byId("leaderboard").hidden = true;
     byId("energy-label").hidden = true;

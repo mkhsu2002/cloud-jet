@@ -1,3 +1,4 @@
+import { GATES } from "./ascent";
 import type { Track } from "./simulation";
 
 export function curvature(track: Track, distance: number) {
@@ -22,6 +23,22 @@ interface Pose {
 }
 const routes = new WeakMap<Track, Pose[]>();
 const origin = -90;
+function altitude(distance: number) {
+  const gate = GATES.findIndex(({ distance: end }) => distance <= end);
+  if (gate < 0) return GATES[GATES.length - 1].altitude;
+  const before = GATES[gate - 1];
+  const after = GATES[gate];
+  const t = Math.max(
+    0,
+    (distance - (before?.distance ?? 0)) /
+      (after.distance - (before?.distance ?? 0)),
+  );
+  return (
+    (before?.altitude ?? 0) +
+    (after.altitude - (before?.altitude ?? 0)) * t * t * (3 - 2 * t)
+  );
+}
+
 export function sampleTrack(track: Track, distance: number): Pose {
   let route = routes.get(track);
   if (!route) {
@@ -33,7 +50,9 @@ export function sampleTrack(track: Track, distance: number): Pose {
       route.push({
         x: previous.x + Math.sin(heading),
         z: previous.z - Math.cos(heading),
-        y: 10 + 5 * Math.sin((d + 1) * 0.009) + 0.006 * Math.max(0, d),
+        y: track.ascent
+          ? 10 + altitude(d + 1)
+          : 10 + 5 * Math.sin((d + 1) * 0.009) + 0.006 * Math.max(0, d),
         heading: previous.heading + turn,
       });
     }

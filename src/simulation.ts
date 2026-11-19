@@ -1,11 +1,5 @@
 import { curvature } from "./track";
-import {
-  RELAYS,
-  resolveRelay,
-  rescueFeedback,
-  rescuedTotal,
-  type RescueOutcome,
-} from "./rescue";
+import { GATES, gateOutcome } from "./ascent";
 export const STEP = 1 / 120;
 export interface Corner {
   start: number;
@@ -18,6 +12,7 @@ export interface Track {
   name: string;
   length: number;
   corners: Corner[];
+  ascent?: true;
 }
 export const PRACTICE: Track = {
   id: "harbor-v2",
@@ -26,35 +21,22 @@ export const PRACTICE: Track = {
   corners: [{ start: 180, end: 340, direction: 1, name: "HARBOR TURN" }],
 };
 export const COURSE: Track = {
-  id: "last-light-rescue-v1",
-  name: "Last Light",
+  id: "cloud-jet-ascent-v1",
+  ascent: true,
+  name: "Cloud Jet: Ascent",
   length: 2450,
   corners: [
-    { start: 180, end: 340, direction: 1, name: "SILENT HARBOR" },
-    { start: 620, end: 800, direction: -1, name: "STORM CHANNEL" },
-    { start: 1060, end: 1240, direction: 1, name: "CLOUD BREAK" },
-    { start: 1500, end: 1680, direction: -1, name: "BEACON APPROACH" },
-    { start: 1940, end: 2140, direction: 1, name: "LAST LIGHT" },
+    { start: 180, end: 340, direction: 1, name: "SUNLIFT" },
+    { start: 620, end: 800, direction: -1, name: "CLOUD SPIRES" },
+    { start: 1060, end: 1240, direction: 1, name: "PRISM RIM" },
+    { start: 1500, end: 1680, direction: -1, name: "THIN BLUE" },
+    { start: 1940, end: 2140, direction: 1, name: "MOTHERSHIP DOCK" },
   ],
 };
-export const RESCUE: Track = {
-  id: "convoy-rescue-v1",
-  name: "Convoy Rescue",
-  length: 1040,
-  corners: COURSE.corners.slice(0, 2),
-};
-export function rescueCount(track: Track) {
-  return track === COURSE || track === RESCUE ? track.corners.length : 0;
-}
-export function rescueCapacity(track: Track) {
-  return RELAYS.slice(0, rescueCount(track)).reduce(
-    (total, windows) =>
-      total + Math.max(...windows.map((window) => window.ships)),
-    0,
-  );
-}
 export interface RaceState {
-  rescues: RescueOutcome[];
+  gatesCleared: number;
+  deadline: number;
+  failed: boolean;
   time: number;
   distance: number;
   speed: number;
@@ -78,7 +60,9 @@ const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
 function initial(track: Track): RaceState {
   return {
-    rescues: Array.from({ length: rescueCount(track) }, () => null),
+    gatesCleared: 0,
+    deadline: track === COURSE ? GATES[0].seconds : Infinity,
+    failed: false,
     time: 0,
     distance: 0,
     speed: 32,
@@ -175,25 +159,13 @@ export class Simulation {
         s.boosts++;
         this.used.add(c);
         if (release > 0.82 && s.entryQuality > 0.82) s.perfects++;
-        const relay = this.track.corners.indexOf(c);
-        if (s.rescues[relay] === null) {
-          const outcome = resolveRelay(relay, s.distance, s.energy, {
-            escorted: rescuedTotal(s.rescues),
-            entryQuality: s.entryQuality,
-            slip: s.slip,
-            lateral: s.lateral,
-          });
-          s.rescues[relay] = outcome;
-          this.message(rescueFeedback(relay, outcome));
-        } else {
-          this.message(
-            release > 0.82
-              ? "PERFECT BOOST"
-              : s.distance < c.end - 10
-                ? "EARLY BOOST"
-                : "LATE BOOST",
-          );
-        }
+        this.message(
+          release > 0.82
+            ? "PERFECT BOOST"
+            : s.distance < c.end - 10
+              ? "EARLY BOOST"
+              : "LATE BOOST",
+        );
       } else this.message("KEEP YOUR MOMENTUM");
       s.energy = 0;
       this.driftCorner = undefined;
@@ -206,12 +178,12 @@ export class Simulation {
       const next = (this.ticks + 1) * STEP;
       while (this.queue.length && this.queue[0].time <= next + 1e-9)
         this.apply(this.queue.shift()!.down);
-      this.step();
+      this.step(next);
       this.ticks++;
       this.state.time = this.ticks * STEP;
     }
   }
-  private step() {
+  private step(nextTime: number) {
     const s = this.state;
     const corner = this.track.corners.find(
       (c) => s.distance >= c.start && s.distance < c.end,
@@ -268,17 +240,20 @@ export class Simulation {
       s.speed + clamp((target - s.speed) * 2.1, -22, 34) * STEP,
     );
     s.distance = Math.min(this.track.length, s.distance + s.speed * STEP);
-    for (let relay = 0; relay < s.rescues.length; relay++) {
-      const windows = RELAYS[relay];
-      if (
-        s.rescues[relay] === null &&
-        s.distance > windows[windows.length - 1].to
-      ) {
-        s.rescues[relay] = 0;
-        this.message("RELAY MISSED");
-      }
+    if (this.track === COURSE) {
+      const gate = GATES[s.gatesCleared];
+      const outcome = gateOutcome(
+        nextTime,
+        s.deadline,
+        s.distance,
+        gate.distance,
+      );
+      if (outcome === "cleared") {
+        s.gatesCleared++;
+        s.deadline = nextTime + (GATES[s.gatesCleared]?.seconds ?? 0);
+      } else if (outcome === "missed") s.failed = true;
     }
-    if (s.distance >= this.track.length) {
+    if (s.failed || s.distance >= this.track.length) {
       s.finished = true;
       s.drifting = false;
       s.energy = 0;

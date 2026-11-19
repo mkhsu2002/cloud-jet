@@ -1,24 +1,11 @@
-import { RELAYS, rescuedTotal } from "./rescue";
+import { GATES } from "./ascent";
+import { buildAscentScenery } from "./ascent-scenery";
 import { boostShot } from "./boost-presentation";
 import * as THREE from "three";
-import {
-  COURSE,
-  RESCUE,
-  rescueCount,
-  rescueCapacity,
-  type RaceState,
-  type Track,
-} from "./simulation";
+import { COURSE, type RaceState, type Track } from "./simulation";
 import { sampleTrack, curvature } from "./track";
-import {
-  courier,
-  dock,
-  stormPylon,
-  lighthouse,
-  fleetShip,
-  deckTexture,
-  mesh,
-} from "./art";
+import { courier, dock, stormPylon, deckTexture } from "./art";
+
 export function center(d: number, track: Track) {
   const { x, y, z } = sampleTrack(track, d);
   return new THREE.Vector3(x, y, z);
@@ -49,7 +36,7 @@ function material(color: number, emissive = 0x000000, intensity = 0) {
 export class World {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(60, 1, 0.2, 1800);
+  private camera = new THREE.PerspectiveCamera(60, 1, 0.2, 4800);
   private courseGroup = new THREE.Group();
   private environment = new THREE.Group();
   private ship = new THREE.Group();
@@ -72,40 +59,17 @@ export class World {
     this.pitchVelocity = 0;
     this.lastDistance = -1;
   }
-  private storm = 0;
   private arrivalTime = 0;
-  private approachLamps = new THREE.Group();
   private track: Track = COURSE;
   private low = false;
   private lastDistance = -1;
   private previousTime = 0;
   private gateSigns: { distance: number; sprite: THREE.Sprite }[] = [];
-  private beacon = new THREE.Group();
-  private rescueFleet: {
-    group: THREE.Group;
-    relay: number;
-    window: number;
-    formation: number;
-  }[] = [];
-  private convoy = new THREE.Group();
-  private intensity = 0;
+  private orbital?: ReturnType<typeof buildAscentScenery>;
   private flux = new THREE.Group();
   private fluxMarks: THREE.Mesh[] = [];
   private lastPhase = false;
-  private beaconWarm = new THREE.Color(0xffd48d);
-  private beamMaterial = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    uniforms: { amount: { value: 0 } },
-    vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader: `uniform float amount; varying vec2 vUv;
-      void main(){float lengthFade=pow(clamp(vUv.y,0.,1.),2.5);
-      gl_FragColor=vec4(1.,.69,.34,lengthFade*.18*amount);}`,
-  });
   private look = new THREE.Vector3();
-  private beaconCore = new THREE.MeshBasicMaterial({ color: 0xffcf82 });
   private brass = material(0x6f4932);
   private concrete = material(0x213244);
   private windows = new THREE.MeshBasicMaterial({ color: 0xffb675 });
@@ -115,7 +79,7 @@ export class World {
   private hull = material(0xe1edf0);
   private dark = material(0x112732);
   private roadMat = new THREE.MeshStandardMaterial({
-    color: 0x8d9aa9,
+    color: 0xc39d82,
     map: deckTexture(),
     roughness: 0.95,
     metalness: 0.05,
@@ -130,12 +94,12 @@ export class World {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.17;
-    this.scene.fog = new THREE.FogExp2(0x112b3c, 0.0015);
-    this.scene.add(new THREE.HemisphereLight(0xbbeeff, 0x364b62, 2.3));
+    this.scene.fog = new THREE.FogExp2(0xf2cdb9, 0.00022);
+    this.scene.add(new THREE.HemisphereLight(0xffefe0, 0x74617b, 2.45));
     const sun = new THREE.DirectionalLight(0xffddae, 3.5);
     sun.position.set(-100, 250, -300);
     this.scene.add(sun);
-    const rim = new THREE.DirectionalLight(0x83c8ff, 2.5);
+    const rim = new THREE.DirectionalLight(0xc0d9ff, 2.05);
     rim.position.set(180, 60, 50);
     this.scene.add(rim);
     this.scene.add(this.courseGroup, this.environment, this.ship);
@@ -175,7 +139,7 @@ export class World {
         fragmentShader: `uniform float drive; varying vec2 vUv;void main(){
           float spine=pow(max(0.,1.-abs(vUv.x-.5)*2.),2.2);
           float a=pow(1.-vUv.y,1.65)*spine;
-          vec3 color=mix(vec3(.09,.47,1.),vec3(.67,.98,1.),pow(spine,3.));
+          vec3 color=mix(vec3(.93,.26,.08),vec3(1.,.86,.46),pow(spine,3.));
           gl_FragColor=vec4(color,a*(.34+drive*.62));
         }`,
       });
@@ -185,7 +149,7 @@ export class World {
           trailMaterial,
         );
         const mount = new THREE.Group();
-        mount.position.set(side * 1.91, -0.14, 2.42);
+        mount.position.set(side * 1.48, 0.04, 2.66);
         mount.rotation.x = Math.PI / 2;
         if (crossed) mount.rotateY(Math.PI / 2);
         plume.position.y = 0.5;
@@ -194,7 +158,7 @@ export class World {
         this.driveTrails.push({ mount, material: trailMaterial });
       }
     }
-    const under = new THREE.PointLight(0x4bbdff, 11, 12);
+    const under = new THREE.PointLight(0xffa54f, 8, 12);
     under.position.set(0, -0.6, 1.5);
     this.ship.add(under);
   }
@@ -213,15 +177,23 @@ export class World {
         o.material.dispose();
       }
     });
+    if (this.orbital) {
+      const materials = new Set<THREE.Material>();
+      this.orbital.group.traverse((object) => {
+        if (
+          object instanceof THREE.Mesh &&
+          object.material instanceof THREE.Material
+        )
+          materials.add(object.material);
+      });
+      materials.forEach((material) => material.dispose());
+    }
     this.courseGroup.clear();
     this.gateSigns = [];
-    this.beacon.clear();
-    this.convoy.clear();
-    this.rescueFleet = [];
+    this.orbital = undefined;
     this.skyline.clear();
     this.roadFlow.clear();
-    this.approachLamps.clear();
-    this.intensity = 0;
+    this.arrivalTime = 0;
     const uv: number[] = [];
     const vertices: number[] = [],
       indices: number[] = [];
@@ -297,41 +269,22 @@ export class World {
         "HOLD  /  " + String(i + 1).padStart(2, "0"),
         this.gold,
       );
-      if (!rescueCount(track)) this.gate(c.end - 10, "RELEASE", this.cyan);
+      this.gate(c.end - 10, "RELEASE", this.cyan);
     });
-    this.gate(
-      track.length,
-      track === COURSE ? "LIGHTHOUSE" : "RETURN",
-      this.gold,
-    );
-    this.buildRouteScenery(track);
-    if (rescueCount(track)) {
-      RELAYS.slice(0, rescueCount(track)).forEach((windows, relay) =>
-        windows.forEach((window, index) => {
-          this.gate(
-            window.from,
-            window.bonus
-              ? {
-                  heavy: "HAULER RELAY",
-                  escort: "ESCORT RELAY",
-                  alignment: "ALIGNMENT RELAY",
-                }[window.bonus]
-              : window.ships === 2
-                ? "TWO SHIPS"
-                : "ONE SHIP",
-            index ? this.gold : this.cyan,
-          );
-          for (let formation = 0; formation < window.ships; formation++) {
-            const group = new THREE.Group();
-            const heavy = window.bonus === "heavy" && formation === 1;
-            fleetShip(group, heavy);
-            group.scale.setScalar(heavy ? 1.25 : formation ? 0.84 : 0.95);
-            this.courseGroup.add(group);
-            this.rescueFleet.push({ group, relay, window: index, formation });
-          }
-        }),
+    if (track === COURSE) {
+      this.orbital = buildAscentScenery(track);
+      this.courseGroup.add(this.orbital.group);
+      GATES.forEach((gate, index) =>
+        this.gate(
+          gate.distance,
+          index === GATES.length - 1 ? "DOCK" : `GATE ${index + 1}`,
+          this.gold,
+        ),
       );
+    } else {
+      this.gate(track.length, "RETURN", this.gold);
     }
+    this.buildRouteScenery(track);
     this.courseGroup.add(this.roadFlow);
     const light = new THREE.MeshBasicMaterial({ color: 0x8faebb });
     const marker = new THREE.BoxGeometry(0.24, 0.06, 1.7);
@@ -388,30 +341,34 @@ export class World {
   }
   private buildSky() {
     const material = new THREE.ShaderMaterial({
-      uniforms: { storm: { value: 0 }, delivery: { value: 0 } },
+      uniforms: { altitude: { value: 0 } },
       side: THREE.BackSide,
       depthWrite: false,
       vertexShader: `varying vec3 vWorld; void main(){ vWorld=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-      fragmentShader: `varying vec3 vWorld; uniform float storm; uniform float delivery;
+      fragmentShader: `varying vec3 vWorld; uniform float altitude;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
       return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
       void main(){vec3 d=normalize(vWorld);float h=d.y;
-      vec3 sky=mix(vec3(.32,.36,.49),vec3(.025,.066,.15),smoothstep(-.04,.78,h));
-      float light=pow(max(0.,dot(d,normalize(vec3(.6,.035,-.8)))),9.);
-      sky+=vec3(.54,.26,.115)*light*(1.-smoothstep(.02,.32,h));
-      vec2 p=vec2(atan(d.x,-d.z)*3.8,h*19.);
+      float rim=smoothstep(-.075,.23,h);
+      vec3 horizon=mix(vec3(1.,.79,.63),vec3(.67,.73,.96),altitude);
+      vec3 high=mix(vec3(.31,.65,.84),vec3(.09,.11,.27),altitude);
+      vec3 sky=mix(horizon,high,rim);
+      float sun=max(0.,dot(d,normalize(vec3(-.51,.19,-.84))));
+      sky+=vec3(.37,.20,.08)*pow(sun,16.);
+      sky=mix(sky,vec3(1.,.95,.76),smoothstep(.9992,.9997,sun));
+      vec2 p=d.xz/(abs(h)+.11)*.85;
       float n=noise(p)+.52*noise(p*2.1)+.23*noise(p*4.4)+.11*noise(p*8.8);
-      float wall=smoothstep(.46,1.3,n)*smoothstep(-.33,.04,h);
-      sky=mix(sky,vec3(.065,.13,.23)+vec3(.09,.12,.15)*n,storm*(.47+.45*wall));
-      float clouds=smoothstep(.6,1.24,n)*smoothstep(-.31,-.02,h);
-      sky=mix(sky,vec3(.11,.17,.27)+vec3(.32,.21,.15)*light,clouds*.72);
-      sky+=vec3(.34,.16,.045)*delivery*pow(1.-abs(h),4.);
+      float sea=(1.-smoothstep(-.20,.035,h));
+      vec3 clouds=mix(vec3(.76,.64,.69),vec3(1.,.94,.81),smoothstep(.32,1.15,n));
+      sky=mix(sky,clouds,sea);
+      float star=step(.998,hash(floor(d.xz*460.)));
+      sky+=vec3(.5,.54,.63)*star*altitude*smoothstep(.11,.4,h)*.75;
       gl_FragColor=vec4(sky,1.);
       }`,
     });
     const sky = new THREE.Mesh(
-      new THREE.SphereGeometry(1400, 28, 16),
+      new THREE.SphereGeometry(4200, 32, 20),
       material,
     );
     sky.frustumCulled = false;
@@ -458,15 +415,10 @@ export class World {
     }
   }
   private buildRouteScenery(track: Track) {
-    this.courseGroup.add(
-      this.skyline,
-      this.beacon,
-      this.convoy,
-      this.approachLamps,
-    );
+    this.courseGroup.add(this.skyline);
     for (let d = 14; d < track.length; d += 11) {
-      const harbor = d < 405;
-      const channel = d >= 490 && d < 1635;
+      const harbor = track !== COURSE && d < 405;
+      const channel = track !== COURSE && d >= 490;
       const heading = sampleTrack(track, d).heading;
       for (const side of [-1, 1]) {
         const post = offset(d, side * 7.12, track);
@@ -508,6 +460,7 @@ export class World {
         }
       }
     }
+    if (track === COURSE) return;
     for (const d of [96, 202, 353]) {
       const arch = new THREE.Group();
       arch.position.copy(center(d, track));
@@ -531,59 +484,7 @@ export class World {
         this.box(arch, 1.4, 0.12, 0.48, x, 10.62, -0.08, this.windows);
       this.skyline.add(arch);
     }
-    const end = offset(track.length + 20, 15, track);
-    this.beacon.position.copy(end);
-    lighthouse(this.beacon);
-    const lens = mesh(
-      this.beacon,
-      new THREE.IcosahedronGeometry(1.87, 2),
-      this.beaconCore,
-      0,
-      30.7,
-      0,
-    );
-    lens.name = "beacon lens";
-    const beam = new THREE.Mesh(
-      new THREE.ConeGeometry(23, 220, 24, 12, true),
-      this.beamMaterial,
-    );
-    beam.position.set(0, 30.8, -110);
-    beam.rotation.x = Math.PI / 2;
-    const arm = new THREE.Group();
-    arm.add(beam);
-    this.beacon.add(arm);
-    this.beam = arm;
-
-    for (let i = 0; i < 10; i++) {
-      const p = offset(
-        track.length - 18 + i * 4,
-        i % 2 === 0 ? 7.7 : -7.7,
-        track,
-      );
-      this.box(
-        this.approachLamps,
-        0.44,
-        0.23,
-        0.94,
-        p.x,
-        p.y + 0.47,
-        p.z,
-        this.gold,
-      );
-    }
-    for (let i = 0; i < rescueCapacity(track); i++) {
-      const ship = new THREE.Group();
-      ship.position.set(
-        ((i % 3) - 1) * 13,
-        8 + Math.floor(i / 3) * 5,
-        -Math.floor(i / 3) * 19 - (i % 3) * 6,
-      );
-      ship.rotation.y = 0.28;
-      fleetShip(ship);
-      this.convoy.add(ship);
-    }
   }
-  private beam?: THREE.Group;
 
   private buildAtmosphere() {
     const random = (n: number) => {
@@ -595,9 +496,9 @@ export class World {
     cloudCanvas.height = 256;
     const ctx = cloudCanvas.getContext("2d")!;
     const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    gradient.addColorStop(0, "rgba(167,213,232,.45)");
-    gradient.addColorStop(0.35, "rgba(126,178,203,.23)");
-    gradient.addColorStop(1, "rgba(80,130,166,0)");
+    gradient.addColorStop(0, "rgba(255,247,229,.78)");
+    gradient.addColorStop(0.35, "rgba(230,205,205,.37)");
+    gradient.addColorStop(1, "rgba(183,158,184,0)");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 256, 256);
     const cloudTexture = new THREE.CanvasTexture(cloudCanvas);
@@ -605,15 +506,15 @@ export class World {
       map: cloudTexture,
       transparent: true,
       depthWrite: false,
-      color: 0x89b6ce,
+      color: 0xffeee1,
     });
-    for (let i = 0; i < 220; i++) {
+    for (let i = 0; i < 172; i++) {
       const d = random(i * 3) * 3000 - 200;
       const p = center(d, COURSE);
       const cloud = new THREE.Sprite(cloudMaterial);
       cloud.position.set(
         p.x + (random(i * 3 + 1) - 0.5) * 650,
-        -32 - random(i + 300) * 70,
+        p.y - 26 - random(i + 300) * 125,
         p.z,
       );
       cloud.scale.set(
@@ -663,8 +564,7 @@ export class World {
   render(s: RaceState, active: boolean, time: number) {
     const elapsed = Math.min(0.08, Math.max(0, time - this.previousTime));
     this.previousTime = time;
-    const delivered =
-      s.finished && (this.track === COURSE || this.track === RESCUE);
+    const delivered = s.finished && !s.failed && this.track === COURSE;
     if (s.boosts < this.seenBoosts) this.resetBoost();
     if (s.boosts > this.seenBoosts) {
       this.ignitionAt = s.time;
@@ -677,55 +577,24 @@ export class World {
     );
     this.roadFlow.visible = !this.classic;
 
-    this.arrivalTime = delivered ? this.arrivalTime + elapsed : 0;
-    this.intensity = THREE.MathUtils.smoothstep(this.arrivalTime, 0.3, 1.32);
-    this.beaconCore.color.set(0x3d4d59).lerp(this.beaconWarm, this.intensity);
-    if (this.beam) {
-      this.beam.visible = delivered;
-      this.beam.rotation.y = -0.9 + (this.low ? 0.5 : this.arrivalTime * 0.32);
-      this.beamMaterial.uniforms.amount.value = this.intensity;
-    }
-    this.approachLamps.children.forEach((light, i) => {
-      light.visible = this.arrivalTime > 0.5 + i * 0.072;
-    });
-    this.convoy.visible = delivered && this.arrivalTime > 0.82;
-    const count = rescuedTotal(s.rescues);
-    this.convoy.children.forEach((ship, index) => {
-      ship.visible = index < count;
-    });
-    if (delivered) {
-      const distance = THREE.MathUtils.smoothstep(this.arrivalTime, 1.05, 4.4);
-      this.convoy.position.copy(
-        offset(this.track.length + 40 + distance * 72, 5, this.track),
-      );
-      this.convoy.position.y += distance * 10;
-      this.convoy.rotation.y = -sampleTrack(this.track, this.track.length)
-        .heading;
-    }
+    const terminal = delivered || s.failed;
+    this.arrivalTime = terminal ? this.arrivalTime + elapsed : 0;
+    const reveal = THREE.MathUtils.smoothstep(this.arrivalTime, 0, 2.35);
+    const fall = s.failed ? Math.min(118, this.arrivalTime ** 2 * 30) : 0;
     if (active && !this.lastPhase) this.lastDistance = -1;
     this.lastPhase = active;
-    const d = active ? s.distance : 30 + Math.sin(time * 0.08) * 12;
-    for (const { group, relay, window, formation } of this.rescueFleet) {
-      const gate = RELAYS[relay][window];
-      const result = s.rescues[relay];
-      const saved = gate.bonus
-        ? (result ?? 0) > formation
-        : result === gate.ships;
-      const forward = saved ? Math.min(54, Math.max(0, d - gate.from)) : 0;
-      const shipDistance =
-        (gate.from + gate.to) * 0.5 + formation * 10 + forward;
-      group.position.copy(
-        offset(
-          shipDistance,
-          (window === 1 ? -1 : 1) * (13 + formation * 5),
-          this.track,
-        ),
-      );
-      group.position.y += 5 + formation * 3 + forward * 0.12;
-      group.rotation.y = -sampleTrack(this.track, shipDistance).heading;
-      group.visible =
-        !delivered && d < gate.to + 45 && (result === null || saved);
-    }
+    const d = active ? s.distance : 19 + Math.sin(time * 0.08) * 8;
+    this.orbital?.shutters.forEach((leaves, index) => {
+      const amount =
+        index < s.gatesCleared
+          ? 1
+          : s.failed && index === s.gatesCleared
+            ? 1 - reveal
+            : 1;
+      leaves.forEach((leaf, side) => {
+        leaf.position.x = (side ? 1 : -1) * (4 + 15 * amount);
+      });
+    });
     for (const { distance, sprite } of this.gateSigns) {
       sprite.material.opacity = THREE.MathUtils.smoothstep(distance - d, -2, 6);
       sprite.visible = sprite.material.opacity > 0 && !delivered;
@@ -735,11 +604,7 @@ export class World {
       s.speed,
       time,
       s.boostRemaining > 0 ? s.thrust : 0,
-      active &&
-        !delivered &&
-        rescueCount(this.track) > 0 &&
-        d >= 530 &&
-        d < 1620,
+      active && !delivered && this.track === COURSE && d >= 530 && d < 1620,
     );
     const p = offset(d, s.lateral, this.track);
     this.ship.position
@@ -751,19 +616,24 @@ export class World {
           0,
         ),
       );
+    this.ship.position.y -= fall;
+    if (delivered)
+      this.ship.position.addScaledVector(tangent(d, this.track), 43 * reveal);
     const dir = tangent(d, this.track);
     const yaw = Math.atan2(-dir.x, -dir.z);
     const bank = curvature(this.track, d) * 12;
     this.ship.rotation.set(
-      -s.thrust * Number(s.boostRemaining > 0) * 0.1,
+      s.failed
+        ? -reveal * 0.78
+        : -s.thrust * Number(s.boostRemaining > 0) * 0.1,
       yaw - s.slip,
-      bank - s.slip * 0.6,
+      s.failed ? reveal * 1.05 : bank - s.slip * 0.6,
     );
     const pushing = s.boostRemaining > 0 ? s.thrust : 0;
     this.pitchVelocity +=
       (pushing - this.pitchVelocity) * (1 - Math.exp(-elapsed * 10));
     for (const trail of this.driveTrails) {
-      trail.mount.visible = active && !delivered;
+      trail.mount.visible = active && !terminal;
       trail.mount.scale.set(
         0.6 + this.pitchVelocity * 0.63,
         1.55 + this.pitchVelocity * 9.5 + shot.kick * 3.2,
@@ -771,19 +641,10 @@ export class World {
       );
       trail.material.uniforms.drive.value = this.pitchVelocity;
     }
-    const isStorm =
-      active && rescueCount(this.track) > 0 && d >= 485 && d < 1680;
-    this.storm +=
-      (Number(isStorm) - this.storm) * (1 - Math.exp(-elapsed * 2.6));
     const skyMaterial = this.sky?.material as THREE.ShaderMaterial | undefined;
-    if (skyMaterial) {
-      skyMaterial.uniforms.storm.value = this.storm;
-      skyMaterial.uniforms.delivery.value = this.intensity;
-    }
-    const reveal =
-      this.low && delivered
-        ? 1
-        : THREE.MathUtils.smoothstep(this.arrivalTime, 0, 2.35);
+    if (skyMaterial)
+      skyMaterial.uniforms.altitude.value =
+        this.track === COURSE ? THREE.MathUtils.smoothstep(d, 820, 2310) : 0;
     const cameraD =
       d -
       (delivered
@@ -793,18 +654,24 @@ export class World {
             ? 11.8 + this.pitchVelocity * 7.2
             : 11.8
           : 19);
-    const side = delivered ? -17 - reveal * 15 : active ? s.lateral * 0.7 : -14;
-    const height = delivered ? 11 + reveal * 19 : active ? 4.25 : 7;
+    const side = delivered ? -15 - reveal * 23 : active ? s.lateral * 0.7 : -14;
+    const height = delivered ? 10 + reveal * 18 : active ? 4.25 : 7;
     const cam = offset(cameraD, side, this.track).add(
       new THREE.Vector3(0, height, 0),
     );
     const target = offset(d + (active ? 24 : 20), active ? 0 : 7, this.track);
-    target.y += active ? 1.4 : 3;
-    if (delivered)
+    target.y += active ? 3.3 : 9;
+    if (delivered && this.orbital)
       target.lerp(
-        this.beacon.position.clone().add(new THREE.Vector3(0, 18, 0)),
-        0.64,
+        this.orbital.dock.position.clone().add(new THREE.Vector3(0, 25, 0)),
+        0.72,
       );
+    if (s.failed) {
+      cam.copy(offset(d - 21, -6, this.track));
+      cam.y = this.ship.position.y + 7;
+      target.copy(this.ship.position).addScaledVector(dir, 3);
+      target.y -= 1;
+    }
     if (this.lastDistance < 0 || Math.abs(d - this.lastDistance) > 50) {
       this.camera.position.copy(cam);
       this.look.copy(target);
@@ -815,13 +682,13 @@ export class World {
     // Apply the short inertial offset after the normal chase smoothing.
     // It decays independently of sustained boost and does not flood the FOV.
     const chasePosition = this.camera.position.clone();
-    if (active && !delivered && shot.lag > 0) {
+    if (active && !terminal && shot.lag > 0) {
       this.camera.position.addScaledVector(dir, -shot.lag);
       this.camera.position.y -= shot.kick * 0.32;
     }
     this.camera.lookAt(this.look);
-    if (active && !delivered) this.camera.rotateX(shot.pitch);
-    if (!this.low && active && !delivered)
+    if (active && !terminal) this.camera.rotateX(shot.pitch);
+    if (!this.low && active && !terminal)
       this.camera.rotateZ(bank * 0.35 - s.slip * 0.12);
     this.sky?.position.copy(this.camera.position);
     const targetFov =
@@ -834,7 +701,7 @@ export class World {
     this.camera.fov +=
       (targetFov - this.camera.fov) * (1 - Math.exp(-elapsed * 5));
     const chaseFov = this.camera.fov;
-    if (active && !delivered && shot.lag > 0) {
+    if (active && !terminal && shot.lag > 0) {
       this.camera.fov = THREE.MathUtils.radToDeg(
         2 *
           Math.atan(

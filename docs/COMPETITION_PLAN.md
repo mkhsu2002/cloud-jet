@@ -1,11 +1,11 @@
 # Competition strategy and execution plan
 
 Prepared: 2026-11-19 (America/Vancouver).
-Status updated 2026-11-19: MK approved the stack and authorized continuous implementation. The browser game is implemented; see QA_V2.md for actual verification and release status. Competition submission remains unfinished. Historical planning targets below are not completion claims.
+Status updated 2026-11-19: MK approved the stack and authorized continuous implementation. The browser game is implemented; see QA_ASCENT.md for current verification and release status. Competition submission remains unfinished. Historical planning targets below are not completion claims.
 
 ## Experience direction superseded
 
-On 2026-11-19, MK rejected the v1 handling, visuals, sound and missing motivation. The delivery/engineering records below remain historical context; use UPGRADE_V2.md for the approved Last Light direction and QA_V2.md for current verification.
+On 2026-11-19, MK rejected the v1 handling, visuals, sound and missing motivation. The delivery/engineering records below remain historical context; UPGRADE_V2.md and QA_V2.md record the earlier Last Light build.
 
 ## Original recommendation, superseded 2026-11-19
 
@@ -23,7 +23,9 @@ Prototype two consecutive rescue encounters in the browser. Hold through the win
 
 WebStorm activation and interactive verification for the two-bend rescue are complete. The IDE ran the four rescue cases and its debugger stepped through the three release outcomes and replay reset. DEVELOPMENT_LOG.md records the evidence. The organizer makes the eligibility decision.
 
-**Current implementation, 2026-11-19.** Last Light is the ranked five-turn convoy mission. The final three turns add cargo charge, clean entry with an existing escort, and recentering before the lighthouse. Rescued ships appear in the arrival sequence. The local board ranks ship count first, then delivery time. The two-turn route remains available for practice. See DEVELOPMENT_LOG.md and QA_V2.md for verification.
+**Historical checkpoint, 2026-11-19.** Last Light is the ranked five-turn convoy mission. The final three turns add cargo charge, clean entry with an existing escort, and recentering before the lighthouse. Rescued ships appear in the arrival sequence. The local board ranks ship count first, then delivery time. The two-turn route remains available for practice. See DEVELOPMENT_LOG.md and QA_V2.md for verification.
+
+**Current game, 2026-11-19.** Cloud Jet: Ascent replaces the rescue mission. Players must cross five independently timed gates to dock at an alien mothership. A miss ends the run. The booth flow retains the one-button input and quick handoff. The release evidence is in QA_ASCENT.md.
 
 ## Verified competition facts and remaining checks
 

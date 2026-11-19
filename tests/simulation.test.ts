@@ -39,14 +39,17 @@ describe("racing behavior", () => {
     expect(ideal.time).toBeLessThan(drive("none", PRACTICE).time);
     expect(ideal.boosts).toBe(1);
   });
-  it("recovers from a key held for the entire course", () => {
+  it("closes the first gate when the drift key is never released", () => {
     const s = drive("held");
     expect(s.finished).toBe(true);
-    expect(s.time).toBeLessThan(120);
+    expect(s.failed).toBe(true);
+    expect(s.gatesCleared).toBe(0);
   });
   it("finishes the full course in the intended short-session range", () => {
     const s = drive("ideal");
     expect(s.finished).toBe(true);
+    expect(s.failed).toBe(false);
+    expect(s.gatesCleared).toBe(5);
     expect(s.time).toBeGreaterThan(40);
     expect(s.time).toBeLessThan(75);
   });
@@ -124,8 +127,8 @@ it("finishes 100 deterministic stress replays without stuck or non-finite state"
     }
     sim.advanceTo(120);
     expect(sim.state.finished).toBe(true);
-    expect(sim.state.distance).toBe(COURSE.length);
-    expect(sim.state.time).toBeGreaterThan(35);
+    expect(sim.state.failed || sim.state.distance === COURSE.length).toBe(true);
+    expect(sim.state.time).toBeGreaterThan(8);
     expect(Number.isFinite(sim.state.speed)).toBe(true);
   }
 });

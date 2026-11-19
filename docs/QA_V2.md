@@ -1,5 +1,6 @@
 # Last Light verification
 
+**Archived 2026-11-19.** This records the earlier Cloud Jet build. The current game is Ascent. See [current verification](QA_ASCENT.md).
 Checked 2026-11-19 (America/Vancouver).
 
 - Ran the harbor practice in the authorized Chrome lane using Space at the entry and exit markers. Observed slip through the turn, exit acceleration, one perfect corner, one boost and zero rail contacts in 17.783 seconds. Captured the in-race view at the apex.

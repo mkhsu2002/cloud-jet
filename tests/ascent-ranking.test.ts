@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { readRecords, saveRecord } from "../src/records";
 
-it("ranks ships before time without changing earlier time-trial records", () => {
+it("keeps ascent times separate from earlier convoy records", () => {
   const map = new Map<string, string>();
   const store = {
     getItem: (key: string) => map.get(key) ?? null,
@@ -20,6 +20,11 @@ it("ranks ships before time without changing earlier time-trial records", () => 
     [9, 50],
     [9, 52],
     [8, 37],
+  ]);
+  saveRecord(store, "cloud-jet-ascent-v1", { ...base, time: 44 });
+  saveRecord(store, "cloud-jet-ascent-v1", { ...base, time: 42 });
+  expect(readRecords(store, "cloud-jet-ascent-v1").map((r) => r.time)).toEqual([
+    42, 44,
   ]);
   expect(readRecords(store, "last-light-v2").map((r) => r.time)).toEqual([30]);
 });

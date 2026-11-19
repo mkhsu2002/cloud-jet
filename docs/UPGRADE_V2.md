@@ -1,5 +1,6 @@
 # Cloud Jet v2 — experience redesign proposal
 
+**Archived 2026-11-19.** This records the earlier Cloud Jet build. The current game is Ascent. See [current verification](QA_ASCENT.md).
 Date: 2026-11-19. Status on 2026-11-19: approved and implemented for the playable v2. This document preserves the design proposal. See QA_V2.md for measured behavior and remaining experience checks. MK rejected the v1 handling, visuals, sound and lack of narrative motivation. This proposal replaces the v1 experience direction. Existing automated passes remain functional evidence only, not evidence of entertainment value or artistic quality.
 
 ## Product direction

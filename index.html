@@ -9,12 +9,13 @@
     <meta name="theme-color" content="#07141e" />
     <meta
       name="description"
-      content="Carry the ignition core through the storm. Drift through the skyway and relight the beacon that guides the fleet home."
+      content="Drift through five timed gates and climb above the atmosphere to dock with an alien mothership."
     />
-    <title>Cloud Jet — Last Light</title>
+    <title>Cloud Jet — Ascent</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
+    <div class="fall-mist" aria-hidden="true"></div>
     <canvas
       id="world"
       aria-label="A floating race circuit above the clouds"
@@ -23,7 +24,7 @@
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="Cloud Jet home"
         ><span class="brand-icon">⌁</span> CLOUD<span>JET</span
-        ><small>LAST LIGHT</small></a
+        ><small>ASCENT</small></a
       >
       <div class="utilities">
         <button id="sound" aria-pressed="false">Sound off</button
@@ -34,12 +35,12 @@
     <main>
       <section id="home" class="home panel">
         <div class="eyebrow">
-          <span class="status-dot"></span> COURIER FLIGHT 07
+          <span class="status-dot"></span> FLIGHT TO ORBIT
         </div>
-        <h1>LAST<br /><em>LIGHT</em></h1>
+        <h1>CLOUD JET<br /><em>ASCENT</em></h1>
         <p class="intro">
-          The storm took the beacon. The fleet is still out there.<br />Bring as
-          many ships home as you can.
+          Five gates stand between you and the mothership. Beat each countdown
+          or fall into the cloud sea.
         </p>
         <div class="home-actions">
           <button class="primary" id="race">
@@ -51,12 +52,9 @@
         <a class="flight-comparison" id="comparison-link" href="?flight=A"
           >Compare harbor flights ↗</a
         >
-        <a class="flight-comparison" id="rescue-link" href="?mission=rescue"
-          >Try two rescue turns ↗</a
-        >
         <div class="course-summary">
-          <span><b>CONVOY RESCUE</b></span
-          ><span>5 CORNERS</span><span>ONE BUTTON</span>
+          <span><b>ORBITAL ASCENT</b></span
+          ><span>5 TIMED GATES</span><span>ONE BUTTON</span>
         </div>
       </section>
       <aside id="home-instructions" class="instructions">
@@ -72,7 +70,7 @@
           <kbd>↑</kbd>
           <div>
             <b>RELEASE TO BOOST</b>
-            <p>Let go when RELEASE lights up to rescue ships and boost.</p>
+            <p>Let go when RELEASE NOW lights up to boost toward the gate.</p>
           </div>
         </div>
         <p class="input-note">Use <kbd>SPACE</kbd> or the on-screen button.</p>
@@ -80,12 +78,21 @@
       <section id="hud" hidden aria-label="Race dashboard">
         <div class="race-top">
           <div>
-            <span class="label" id="track-name">LAST LIGHT</span>
+            <span class="label" id="track-name">ASCENT</span>
             <div class="timer" id="timer">00:00.000</div>
           </div>
           <div class="race-progress">
-            <span id="rescued-live" hidden>0 / 9 SHIPS GUIDED HOME</span>
-            <span id="corner-label">SILENT HARBOR</span>
+            <div id="gate-panel" class="gate-panel" hidden>
+              <span id="sector">GATE 1 / 5 · SUNLIFT</span>
+              <strong id="gate-time">9.8 s</strong>
+              <progress
+                id="gate-meter"
+                max="9.8"
+                value="9.8"
+                aria-label="Time remaining at the gate"
+              ></progress>
+            </div>
+            <span id="corner-label">FLIGHT PATH</span>
             <div class="progress-track"><i id="progress"></i></div>
             <span id="distance">0 / 2450 M</span>
           </div>
@@ -99,13 +106,6 @@
             ><span class="speed-unit">KM/H</span>
           </div>
           <div class="timing-guide">
-            <div id="relay-guide" class="relay-guide" hidden>
-              <p id="relay-brief" aria-live="polite"></p>
-              <div class="relay-checks">
-                <span id="relay-check-a" hidden></span>
-                <span id="relay-check-b" hidden></span>
-              </div>
-            </div>
             <div id="cue" class="cue">FIND THE GOLD LINE</div>
             <div class="energy-rail"><i id="energy"></i></div>
             <span class="label" id="energy-label">DRIFT ENERGY</span>
@@ -121,19 +121,19 @@
         </div>
       </section>
       <section id="arrival" class="arrival" hidden aria-live="polite">
-        <strong id="arrival-stage">Core delivered</strong
-        ><span id="arrival-line">Ignition sequence started.</span>
+        <strong id="arrival-stage">Gate reached</strong
+        ><span id="arrival-line">Docking sequence started.</span>
         <button class="quiet" id="arrival-results" hidden>
           View flight results
         </button>
       </section>
       <section id="results" class="modal" hidden aria-labelledby="result-title">
         <div class="result-card">
-          <div class="eyebrow" id="result-eyebrow">BEACON ONLINE</div>
-          <h2 id="result-title">The fleet has a way home.</h2>
+          <div class="eyebrow" id="result-eyebrow">MISSION COMPLETE</div>
+          <h2 id="result-title">Mothership reached.</h2>
           <div id="result-time" class="result-time"></div>
           <p id="personal-best"></p>
-          <p id="rescue-results" hidden></p>
+          <p id="sector-results" hidden></p>
           <div class="result-stats" id="race-results">
             <div>
               <strong id="result-perfect">0/5</strong
@@ -153,7 +153,7 @@
           >
           <div class="leaderboard" id="leaderboard">
             <h3>
-              <span id="leaderboard-name">CONVOY RECORDS</span>
+              <span id="leaderboard-name">FASTEST FLIGHTS</span>
               <span>ON THIS DEVICE</span>
             </h3>
             <ol id="records"></ol>
@@ -184,7 +184,7 @@
       </section>
     </main>
     <footer id="footer">
-      <span>LAST LIGHT</span
+      <span>ASCENT</span
       ><span
         >AN ORIGINAL GAME BY FLYPIG <span class="footer-star">✳</span></span
       >

@@ -4,15 +4,11 @@ Updated: 2026-11-19. Applies to the browser implementation introduced in this sp
 
 ## Start
 
-Use a modern desktop browser with WebGL 2 and hardware acceleration. Open the hosted game or run the bundled build locally. Start with a keyboard and a 1080p display; use the full-screen button after opening the page. Harbor Shakedown is a single-corner practice run. Last Light has five corners and ends with a short sequence showing the core delivery, beacon ignition and convoy departure. Press Space during arrival or select **View flight results** once the beacon lights.
+Open the hosted game or the local build on a modern browser with WebGL 2 and hardware acceleration. The main mission has five timed gates. Wait for **HOLD NOW**, hold through the bend, then release on **RELEASE NOW**. Use Space or the circular on-screen button. A crossed gate starts the next clock. A closed gate ends the flight. The harbor practice run is untimed.
 
-Launch the mission from the normal home address for ranked booth play. The five-turn mission ranks by ships guided home, then by delivery time. The two-turn tutorial on the home page is unranked. The optional harbor comparison runs the same practice track with both speed displays hidden and excludes those attempts from rankings.
+At results, **Next pilot · flight briefing** (or Space) returns to the ready screen and focuses **Launch mission**. The previous record stays on the device. **Fly again** restarts immediately for the same pilot. Only successful dockings enter the Ascent board, sorted by elapsed time.
 
-Wait for **HOLD NOW**, then hold Space through the bend. Release on the highlighted rescue cue. For the final three turns, the panel shows which bonus conditions are met. The circular on-screen button offers the same hold/release interaction for a mouse or touch input. Mistakes slow the flight and never eliminate the player. Restart is available at any time. Focus loss or a suspended tab ends that attempt; choose a fresh flight to rank.
-
-At mission results, the primary action **Next pilot · flight briefing** returns to the ready screen and focuses **Launch mission**. The previous pilot can press Space to hand off, and the next can press Space to launch. This leaves the record intact and resets the next flight’s timer and ship count. **Fly again** remains available for the same pilot.
-
-Audio is enabled on the first flight after a user gesture. Use Sound to mute it. The score is included in the local build. Low effects removes scenery, lowers resolution and removes boost camera widening; reduced-motion preference enables it by default. Reduced effects does not change race simulation.
+Use Sound to mute music and cues. Low effects reduces scenery and camera effects. Focus loss interrupts the run. A brief descent or docking sequence leads to results automatically and can also be advanced.
 
 ## Offline package
 

@@ -6,8 +6,9 @@ export class AudioEngine {
   private windLevel?: GainNode;
   private effects?: GainNode;
   private musicGain?: GainNode;
-  private music = new Audio("/audio/last-light.ogg");
+  private music = new Audio("/audio/ascent.ogg");
   enabled = false;
+  private cueUntil = 0;
 
   constructor() {
     this.music.loop = true;
@@ -84,7 +85,11 @@ export class AudioEngine {
       t,
       0.1,
     );
-    this.musicGain!.gain.setTargetAtTime(active ? 0.58 : 0.43, t, 0.23);
+    this.musicGain!.gain.setTargetAtTime(
+      t < this.cueUntil ? 0.27 : active ? 0.58 : 0.43,
+      t,
+      0.23,
+    );
   }
 
   ignition(strength: number) {
@@ -104,32 +109,59 @@ export class AudioEngine {
     voice.connect(level).connect(this.effects);
     voice.start(now);
     voice.stop(now + 0.45);
+
+    const turbine = ctx.createOscillator();
+    const turbineLevel = ctx.createGain();
+    turbine.type = "sawtooth";
+    turbine.frequency.setValueAtTime(270, now);
+    turbine.frequency.exponentialRampToValueAtTime(480, now + 0.16);
+    turbine.frequency.exponentialRampToValueAtTime(185, now + 0.61);
+    turbineLevel.gain.setValueAtTime(0.001, now);
+    turbineLevel.gain.exponentialRampToValueAtTime(0.042 * power, now + 0.1);
+    turbineLevel.gain.exponentialRampToValueAtTime(0.001, now + 0.64);
+    turbine.connect(turbineLevel).connect(this.effects);
+    turbine.start(now);
+    turbine.stop(now + 0.67);
   }
 
-  chime(kind: "boost" | "contact" | "arrival") {
+  chime(kind: "boost" | "contact" | "arrival" | "gate" | "warning" | "fall") {
     if (!this.ctx || !this.effects || !this.enabled) return;
-    const ctx = this.ctx,
-      t = ctx.currentTime;
-    const notes =
-      kind === "arrival"
-        ? [261.63, 329.63, 392, 523.25]
-        : kind === "boost"
-          ? [154, 308]
-          : [94];
-    notes.forEach((hz, i) => {
-      const start = t + (kind === "arrival" ? i * 0.13 : 0);
-      const voice = ctx.createOscillator(),
-        gain = ctx.createGain();
-      voice.type = kind === "contact" ? "triangle" : "sine";
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const events = {
+      arrival: [130.81, 196, 261.63, 329.63, 523.25, 659.25],
+      gate: [392, 587.33, 783.99],
+      warning: [340, 340, 452],
+      fall: [164.81, 82.41, 55],
+      boost: [154, 308],
+      contact: [94],
+    };
+    const steps = events[kind];
+    const duration = kind === "arrival" ? 1.26 : kind === "fall" ? 0.88 : 0.27;
+    const interval =
+      kind === "warning" ? 0.25 : kind === "arrival" ? 0.12 : 0.075;
+    if (kind === "fall" || kind === "arrival") this.cueUntil = t + 2.5;
+    steps.forEach((hz, i) => {
+      const start = t + i * interval;
+      const voice = ctx.createOscillator();
+      const gain = ctx.createGain();
+      voice.type = kind === "contact" || kind === "fall" ? "triangle" : "sine";
       voice.frequency.setValueAtTime(hz, start);
-      const duration = kind === "arrival" ? 0.88 : 0.31;
-      if (kind !== "arrival")
+      if (kind === "fall" || kind === "contact")
         voice.frequency.exponentialRampToValueAtTime(
-          hz * (kind === "boost" ? 2.2 : 0.44),
+          hz * 0.43,
+          start + duration,
+        );
+      if (kind === "boost")
+        voice.frequency.exponentialRampToValueAtTime(
+          hz * 2.2,
           start + duration,
         );
       gain.gain.setValueAtTime(0.001, start);
-      gain.gain.exponentialRampToValueAtTime(0.13, start + 0.025);
+      gain.gain.exponentialRampToValueAtTime(
+        kind === "arrival" ? 0.1 : 0.18,
+        start + 0.023,
+      );
       gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
       voice.connect(gain).connect(this.effects!);
       voice.start(start);
