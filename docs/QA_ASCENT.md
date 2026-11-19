@@ -11,3 +11,5 @@ The local Chrome run at 1360 × 850 waited through the first gate without pressi
 ### Cloud-sea art and physical track collapse
 
 The 1360 × 850 browser flight with the modular deck completed all five gates in 42.408 s with five boosts and zero wall grazes. The new backdrop and score were requested successfully. An intentional timeout with the final side-on camera showed the deck and guardrails tilting together, the pod sliding over the exposed edge, and the fog swallowing it after it had separated from the deck. Space returned to the briefing, and the next flight's first gate clock started at 9.8 s. The regression suite passed 22 tests.
+
+Cloudflare Pages production deployment `65d9bda3-5360-4fa9-9a98-b41424326420` serves source `2b370a0349c34d24411d9a8b77a13040872aad6a` after [GitHub Game quality](https://github.com/mkhsu2002/cloud-jet/actions/runs/44629437521) passed. Compared the public HTML, bundles, score and panorama against the build. A public Chrome run reproduced the 9.800 s failure, captured the tilting panels and the pod clear of the edge, then reset the first gate to 9.8 s. The browser loaded the panorama and reported no page errors.
