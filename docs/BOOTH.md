@@ -4,7 +4,7 @@ Updated: 2026-11-19. Applies to the browser implementation introduced in this sp
 
 ## Start
 
-Use a modern desktop browser with WebGL 2 and hardware acceleration. Open the hosted game or run the bundled build locally. Start with a keyboard and a 1080p display; use the full-screen button after opening the page. Harbor Shakedown is a single-corner practice run. Last Light has five corners and ends with the beacon lighting the fleet’s way home.
+Use a modern desktop browser with WebGL 2 and hardware acceleration. Open the hosted game or run the bundled build locally. Start with a keyboard and a 1080p display; use the full-screen button after opening the page. Harbor Shakedown is a single-corner practice run. Last Light has five corners and ends with a short sequence showing the core delivery, beacon ignition and convoy departure. Press Space during the arrival scene to go straight to results.
 
 Controls: press and hold Space at the gold entry line, keep holding through the corner, release at the cyan exit line. The circular on-screen button offers the same hold/release interaction for a mouse or touch input. Mistakes slow the flight and never eliminate the player. Restart is available at any time. Focus loss or a suspended tab ends that attempt; choose a fresh flight to rank.
 

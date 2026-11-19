@@ -45,7 +45,8 @@ TypeScript + Vite + Three.js, plain HTML/CSS overlays, synthesized Web Audio and
 - `src/simulation.ts`: deterministic 120 Hz race simulation, timestamped input, drift/boost energy, speed, wall contact and finish time.
 - `src/session.ts`: countdown, racing, finish and interruption lifecycle.
 - `src/track.ts`: shared sampled track geometry and curvature.
-- `src/world.ts`: original procedural vehicle, tracks, scenery and visual feedback.
+- `src/art.ts`: original courier, loading docks, storm pylons, lighthouse and convoy models, plus the deck texture.
+- `src/world.ts`: scene construction, navigation signs, chase camera, boost plumes and arrival animation.
 - `src/main.ts`: keyboard/pointer interaction, accessible UI, results and display settings.
 - `src/records.ts`: validated local records and graceful storage failure.
 - `src/audio.ts`: bundled original score and layered vehicle and cue synthesis.

@@ -128,6 +128,11 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   if (e.code !== "Space" || e.repeat) return;
+  if (session.phase === "finished" && !byId("arrival").hidden) {
+    e.preventDefault();
+    finish();
+    return;
+  }
   const target = e.target as HTMLElement;
   if (target.tagName === "BUTTON" && target.id !== "drift") return;
   e.preventDefault();
@@ -225,19 +230,25 @@ function frame(now: number) {
   if (phase === "finished" && lastPhase !== "finished") {
     arrivalAt = now;
     if (selected === COURSE) {
+      byId("arrival-stage").textContent = "Core delivered";
+      byId("arrival-line").textContent = "Ignition sequence started.";
       byId("arrival").hidden = false;
       byId("hud").hidden = true;
       byId("radio").hidden = true;
       audio.chime("arrival");
     } else finish();
   }
-  if (
-    phase === "finished" &&
-    selected === COURSE &&
-    !byId("arrival").hidden &&
-    now - arrivalAt >= 3300
-  )
-    finish();
+  if (phase === "finished" && selected === COURSE && !byId("arrival").hidden) {
+    const since = now - arrivalAt;
+    if (since >= 4250) finish();
+    else if (
+      since >= 875 &&
+      byId("arrival-stage").textContent !== "Beacon online"
+    ) {
+      byId("arrival-stage").textContent = "Beacon online";
+      byId("arrival-line").textContent = "The fleet is coming home.";
+    }
+  }
   if (phase === "countdown")
     byId("countdown").textContent = String(
       Math.max(1, Math.ceil((session.startAt - now) / 1000)),

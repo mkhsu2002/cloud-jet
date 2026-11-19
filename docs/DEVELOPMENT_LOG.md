@@ -69,3 +69,7 @@
 MK approved the storm courier redesign. Rebuilt the flight around shared route geometry, continuous yaw and lateral motion, rail contact, immediate boost and a frame-time camera. Proved the harbor turn in Chrome before running the full mission. Authored procedural harbor and storm navigation scenery, a beacon delivery and convoy return, and a loopable original score with separate vehicle and cue layers. Current run and release evidence is in QA_V2.md.
 
 Published Last Light from implementation commit `fa09761` to Cloudflare Pages deployment `79874b77-6714-41c7-baec-ea36baddba83`. Read back the deployed commit and compared live and local build bytes for the page, bundles and original score. Finished the public mission in 42.708 seconds and verified the beacon/convoy ending, results and restart. The game's first public submission remains a separate action.
+
+## 2026-11-19 · Flight art and arrival pass
+
+Rebuilt the courier, harbor, storm channel and lighthouse art for the active flight camera. Added textured decking, closer scenery, longer boost plumes, a nearer chase camera and a gradual arrival reveal with an illuminated lens, sequential runway lights and moving convoy. Captured matched in-game before/after frames for entry, exit and arrival. The art pass preserves course geometry, balancing and ranking IDs. Details are in QA_V2.md.
