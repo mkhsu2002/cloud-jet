@@ -5,11 +5,11 @@ Status updated 2026-11-19: MK approved the stack and authorized continuous imple
 
 ## Experience direction superseded
 
-On 2026-11-19, MK rejected the v1 handling, visuals, sound and missing motivation. The delivery/engineering records below remain historical context; use UPGRADE_V2.md for the proposed next experience direction. The v2 proposal has not been implemented.
+On 2026-11-19, MK rejected the v1 handling, visuals, sound and missing motivation. The delivery/engineering records below remain historical context; use UPGRADE_V2.md for the approved Last Light direction and QA_V2.md for current verification.
 
 ## Recommendation
 
-Enter Category 3, Event Mini Game, with Cloud Jet: Drift & Boost. Build a complete, original, one-button time trial that a booth visitor can understand quickly, finish despite mistakes, and immediately want to replay. The differentiator is two consequential timing decisions per corner: press to establish a drift, then release to convert stored energy into exit speed. Make those decisions visible through trajectory, propulsion and finish time.
+Enter Category 3, Event Mini Game, with Cloud Jet: Last Light. Build a complete, original, one-button time trial that a booth visitor can understand quickly, finish despite mistakes, and immediately want to replay. The differentiator is two consequential timing decisions per corner: press to establish a drift, then release to convert stored energy into exit speed. Make those decisions visible through trajectory, propulsion and finish time.
 
 Pursue the optional AI-Powered Workflow Story only using evidence collected during necessary engineering work. Keep Codex as primary implementation assistance and WebStorm as the genuine debugging, inspection and test workbench. Junie or Air is optional; do not add tools solely for appearance.
 

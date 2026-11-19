@@ -1,23 +1,21 @@
-# Cloud Jet: Drift & Boost
+# Cloud Jet: Last Light
 
 **One button. Two golden moments. Every millisecond matters.**
 
-A playable, browser-based hover-racing time trial by FlyPig. Fly above the clouds, hold a drift through the bend, and release into a burst of speed. Mistakes cost time; they never eliminate you.
+FlyPig’s browser arcade game about a courier carrying a beacon ignition core through a storm. Hold to drift through a bend, release to accelerate and restore the navigation light that guides the fleet home.
 
-## Current status
-
-The public version is a **v1 playable prototype**. On November 19, 2026, MK rejected its handling, visual/audio quality and lack of story motivation. Functional tests and completed laps do not establish experiential acceptance. The [v2 redesign proposal](docs/UPGRADE_V2.md) proposes a storm-courier mission and a representative quality slice before full-route production. No v2 implementation or deployment has occurred.
+The v2 mission replaces the original time-trial prototype. See the [v2 redesign](docs/UPGRADE_V2.md) and [verification record](docs/QA_V2.md).
 
 ## Play
 
-**[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA.md) for verified checks and limitations.
+**[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA_V2.md) for verified checks and limitations.
 
-- **Skyline Circuit**: a 2,450 m course with five corners, countdown, finish timer and instant replay.
-- **First Flight**: a 650 m single-corner practice course.
+- **Last Light**: a 2,450 m mission with five corners, three route beats and a beacon arrival scene.
+- **Harbor Shakedown**: a 920 m single-corner practice course.
 - Press **Space** at the gold entry line, hold through the bend, release at the cyan exit line. The on-screen button supports the same mouse/touch hold-and-release action.
 - Entry timing changes the racing line and energy buildup; release timing changes exit acceleration. Poor lines can graze the wall and slow you down.
 - Rankings are saved on this browser/device, separately for each course version. They are informal local records, not a trusted global leaderboard.
-- Sound is muted initially. Enable it with the sound button. Low effects reduces scenery and camera effects; reduced-motion preference enables it automatically.
+- The first flight enables sound after an interaction. Use Sound to toggle it. Low effects reduces scenery and camera effects; reduced-motion preference enables it automatically.
 - Leaving the window or suspending the tab interrupts the attempt. Start a fresh flight to set a time.
 
 ## Run locally
@@ -46,10 +44,11 @@ TypeScript + Vite + Three.js, plain HTML/CSS overlays, synthesized Web Audio and
 
 - `src/simulation.ts`: deterministic 120 Hz race simulation, timestamped input, drift/boost energy, speed, wall contact and finish time.
 - `src/session.ts`: countdown, racing, finish and interruption lifecycle.
+- `src/track.ts`: shared sampled track geometry and curvature.
 - `src/world.ts`: original procedural vehicle, tracks, scenery and visual feedback.
 - `src/main.ts`: keyboard/pointer interaction, accessible UI, results and display settings.
 - `src/records.ts`: validated local records and graceful storage failure.
-- `src/audio.ts`: opt-in engine and cue synthesis.
+- `src/audio.ts`: bundled original score and layered vehicle and cue synthesis.
 - `tests/`: timing, recovery, frame-rate replay, reset, lifecycle and storage tests.
 
 Rendering does not decide timing quality. Input replays are tested across 30/60/120 fps render schedules; device latency still depends on the actual hardware. CI runs only for game/build/test-related changes, with concurrency cancellation. Documentation-only changes do not trigger a full build or deployment. Public deployment is a deliberate direct-upload release, not triggered by every Git push.

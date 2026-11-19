@@ -63,3 +63,7 @@
 - Reviewed the owning simulation, renderer/camera and audio source. Identified preset lateral/speed convergence, fixed drift presentation, per-frame camera damping, repeated lateral-shift bends and the absence of actual composed music.
 - Proposed Cloud Jet: Last Light: a storm courier delivering a beacon ignition core to guide waiting ships home, with a playable representative slice before expanding the route. Defined handling, shared geometry, art, music/mix, story payoff and experience acceptance work.
 - Updated README/MVP/competition/QA status to distinguish the live v1 prototype from the unimplemented v2 proposal. This task changes documentation only; no game code, assets, deployment or competition submission changed.
+
+## 2026-11-19 · Last Light implementation
+
+MK approved the storm courier redesign. Rebuilt the flight around shared route geometry, continuous yaw and lateral motion, rail contact, immediate boost and a frame-time camera. Proved the harbor turn in Chrome before running the full mission. Authored procedural harbor and storm navigation scenery, a beacon delivery and convoy return, and a loopable original score with separate vehicle and cue layers. Current run and release evidence is in QA_V2.md.

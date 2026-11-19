@@ -1,6 +1,6 @@
 # Cloud Jet v2 — experience redesign proposal
 
-Date: 2026-11-19. Status: proposed design; no v2 gameplay, assets or audio have been implemented. MK rejected the v1 handling, visuals, sound and lack of narrative motivation. This proposal replaces the v1 experience direction. Existing automated passes remain functional evidence only, not evidence of entertainment value or artistic quality.
+Date: 2026-11-19. Status on 2026-11-19: approved and implemented for the playable v2. This document preserves the design proposal. See QA_V2.md for measured behavior and remaining experience checks. MK rejected the v1 handling, visuals, sound and lack of narrative motivation. This proposal replaces the v1 experience direction. Existing automated passes remain functional evidence only, not evidence of entertainment value or artistic quality.
 
 ## Product direction
 
@@ -12,7 +12,7 @@ Recommended working subtitle: **Cloud Jet: Last Light**. Preserve the Cloud Jet 
 | Underground sky-racing championship | Immediate competitive motivation, rivals and spectacle | Rival AI, racing traffic and competition presentation add significant scope |
 | Pilot qualification trial | Very easy to explain and produce | Weaker stakes; risks reproducing v1's detached time-trial experience |
 
-Use the courier direction for the representative slice. It is a proposal, not an approved final story or a claim of completed content.
+MK approved the courier direction on 2026-11-19.
 
 ## Story that plays
 

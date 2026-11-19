@@ -1,23 +1,23 @@
 import * as THREE from "three";
 import { COURSE, type RaceState, type Track } from "./simulation";
-const Y = new THREE.Vector3(0, 1, 0);
-export function center(d: number, track: Track): THREE.Vector3 {
-  let x = 0;
-  for (const c of track.corners) {
-    const t = THREE.MathUtils.clamp((d - c.start) / (c.end - c.start), 0, 1);
-    x += (c.direction * 105 * (1 - Math.cos(t * Math.PI))) / 2;
-  }
-  return new THREE.Vector3(x, 10 + Math.sin(d * 0.004) * 3, -d);
+import { sampleTrack, curvature } from "./track";
+export function center(d: number, track: Track) {
+  const { x, y, z } = sampleTrack(track, d);
+  return new THREE.Vector3(x, y, z);
 }
 function tangent(d: number, track: Track) {
-  return center(d + 1, track)
-    .sub(center(d - 1, track))
-    .normalize();
+  const { heading } = sampleTrack(track, d);
+  return new THREE.Vector3(Math.sin(heading), 0, -Math.cos(heading));
 }
 function offset(d: number, lateral: number, track: Track) {
-  const p = center(d, track),
-    side = new THREE.Vector3().crossVectors(tangent(d, track), Y).normalize();
-  return p.addScaledVector(side, lateral);
+  const { heading } = sampleTrack(track, d);
+  return center(d, track).add(
+    new THREE.Vector3(
+      Math.cos(heading) * lateral,
+      -curvature(track, d) * 16 * lateral,
+      Math.sin(heading) * lateral,
+    ),
+  );
 }
 function material(color: number, emissive = 0x000000, intensity = 0) {
   return new THREE.MeshStandardMaterial({
@@ -39,6 +39,27 @@ export class World {
   private track: Track = COURSE;
   private low = false;
   private lastDistance = -1;
+  private previousTime = 0;
+  private beacon = new THREE.Group();
+  private convoy = new THREE.Group();
+  private intensity = 0;
+  private flux = new THREE.Group();
+  private fluxMarks: THREE.Mesh[] = [];
+  private lastPhase = false;
+  private beamMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffcc83,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+  });
+  private look = new THREE.Vector3();
+  private beaconCore = new THREE.MeshBasicMaterial({ color: 0xffcf82 });
+  private brass = material(0x6f4932);
+  private concrete = material(0x213244);
+  private windows = new THREE.MeshBasicMaterial({ color: 0xffb675 });
+  private skyline = new THREE.Group();
   private cyan = new THREE.MeshBasicMaterial({ color: 0x64e9ff });
   private gold = new THREE.MeshBasicMaterial({ color: 0xffca64 });
   private hull = material(0xe1edf0);
@@ -64,6 +85,8 @@ export class World {
     sun.position.set(-100, 250, -300);
     this.scene.add(sun);
     this.scene.add(this.courseGroup, this.environment, this.ship);
+    this.buildSky();
+    this.buildFlux();
     this.buildShip();
     this.setTrack(COURSE);
     this.buildAtmosphere();
@@ -86,12 +109,33 @@ export class World {
     return m;
   }
   private buildShip() {
-    this.box(this.ship, 1.35, 0.45, 3.5, 0, 0.1, 0, this.hull);
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.87, 2, 4), this.hull);
-    nose.rotation.x = -Math.PI / 2;
-    nose.rotation.z = Math.PI / 4;
-    nose.position.set(0, 0.1, -2.3);
-    this.ship.add(nose);
+    const outline = new THREE.Shape();
+    outline.moveTo(0, -3.9);
+    outline.lineTo(1.04, -1.1);
+    outline.lineTo(2.7, 0.5);
+    outline.lineTo(2.6, 1.9);
+    outline.lineTo(1.5, 1.2);
+    outline.lineTo(0.85, 2.25);
+    outline.lineTo(-0.85, 2.25);
+    outline.lineTo(-1.5, 1.2);
+    outline.lineTo(-2.6, 1.9);
+    outline.lineTo(-2.7, 0.5);
+    outline.lineTo(-1.04, -1.1);
+    outline.closePath();
+    const body = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(outline, {
+        depth: 0.38,
+        bevelEnabled: true,
+        bevelSize: 0.13,
+        bevelThickness: 0.11,
+        bevelSegments: 2,
+      }),
+      this.hull,
+    );
+    body.rotation.x = Math.PI / 2;
+    body.position.y = 0.36;
+    this.ship.add(body);
+    this.box(this.ship, 0.31, 0.2, 2.8, 0, 0.54, -0.62, this.brass);
     const canopy = this.box(
       this.ship,
       0.85,
@@ -136,6 +180,7 @@ export class World {
     this.ship.add(under);
   }
   setTrack(track: Track) {
+    if (this.courseGroup.children.length && this.track === track) return;
     this.track = track;
     this.lastDistance = -1;
     this.courseGroup.traverse((o) => {
@@ -146,6 +191,10 @@ export class World {
       }
     });
     this.courseGroup.clear();
+    this.beacon.clear();
+    this.convoy.clear();
+    this.skyline.clear();
+    this.intensity = 0;
     const vertices: number[] = [],
       indices: number[] = [];
     const railPoints: [THREE.Vector3[], THREE.Vector3[]] = [[], []];
@@ -228,7 +277,12 @@ export class World {
       halo.rotation.y = 0.4;
       this.courseGroup.add(halo);
     });
-    this.gate(track.length, "FINISH", this.gold);
+    this.gate(
+      track.length,
+      track === COURSE ? "LIGHTHOUSE" : "RETURN",
+      this.gold,
+    );
+    this.buildRouteScenery(track);
   }
   private gate(d: number, label: string, mat: THREE.Material) {
     const group = new THREE.Group();
@@ -264,6 +318,184 @@ export class World {
     group.add(sprite);
     this.courseGroup.add(group);
   }
+  private buildSky() {
+    const material = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      vertexShader: `varying vec3 vWorld; void main(){ vWorld=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+      fragmentShader: `varying vec3 vWorld;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+      return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
+      void main(){vec3 d=normalize(vWorld);float h=d.y;
+      vec3 sky=mix(vec3(.32,.36,.49),vec3(.025,.066,.15),smoothstep(-.04,.78,h));
+      float light=pow(max(0.,dot(d,normalize(vec3(.6,.035,-.8)))),9.);
+      sky+=vec3(.54,.26,.115)*light*(1.-smoothstep(.02,.32,h));
+      vec2 p=vec2(atan(d.x,-d.z)*3.8,h*19.);
+      float n=noise(p)+.52*noise(p*2.1)+.23*noise(p*4.4)+.11*noise(p*8.8);
+      float clouds=smoothstep(.6,1.24,n)*smoothstep(-.31,-.02,h);
+      sky=mix(sky,vec3(.11,.17,.27)+vec3(.32,.21,.15)*light,clouds*.72);
+      gl_FragColor=vec4(sky,1.);
+      }`,
+    });
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(1400, 28, 16),
+      material,
+    );
+    sky.frustumCulled = false;
+    sky.renderOrder = -10;
+    this.scene.add(sky);
+    this.sky = sky;
+  }
+  private sky?: THREE.Mesh;
+  private buildFlux() {
+    const line = new THREE.BoxGeometry(0.045, 0.045, 1);
+    const glow = new THREE.MeshBasicMaterial({
+      color: 0xc0e7ff,
+      transparent: true,
+      opacity: 0.36,
+      depthWrite: false,
+    });
+    for (let i = 0; i < 72; i++) {
+      const particle = new THREE.Mesh(line, glow);
+      this.flux.add(particle);
+      this.fluxMarks.push(particle);
+    }
+    this.scene.add(this.flux);
+  }
+  private renderFlux(
+    d: number,
+    speed: number,
+    elapsed: number,
+    boost: number,
+    storm: boolean,
+  ) {
+    this.flux.visible = !this.low && (storm || boost > 0.15);
+    if (!this.flux.visible) return;
+    for (let i = 0; i < this.fluxMarks.length; i++) {
+      const ahead =
+        ((((i * 13.71 - elapsed * (55 + speed * 0.64)) % 88) + 88) % 88) - 13;
+      const x = (i % 2 === 0 ? 1 : -1) * (6 + ((i * 3.71) % 18));
+      const p = offset(d + ahead, x, this.track);
+      const mark = this.fluxMarks[i];
+      mark.position.copy(p);
+      mark.position.y += 0.8 + ((i * 1.79) % 12);
+      mark.rotation.y = -sampleTrack(this.track, d + ahead).heading + 0.18;
+      mark.scale.z = boost > 0 ? 2.3 + boost * 4 : 1.2 + (i % 4) * 0.38;
+    }
+  }
+  private buildRouteScenery(track: Track) {
+    this.courseGroup.add(this.skyline, this.beacon, this.convoy);
+    for (let d = 15; d < track.length; d += 18) {
+      const harbor = d < 420;
+      const tower = d % 4 === 1;
+      for (const side of [-1, 1]) {
+        const { heading } = sampleTrack(track, d);
+        const p = offset(d, side * (harbor ? 22 + (d % 9) : 27), track);
+        const h = 12 + ((d * 7) % 31);
+        if (harbor && tower) {
+          const building = new THREE.Group();
+          building.position.copy(p);
+          building.rotation.y = -heading;
+          this.box(building, 15, h, 19, 0, h / 2 - 11, 0, this.concrete);
+          this.box(building, 13, 2, 16, 0, h - 10, 0, this.dark);
+          for (let row = 0; row < 4; row++)
+            this.box(
+              building,
+              0.16,
+              0.23,
+              11,
+              -side * 7.52,
+              h - 13 - row * 2.7,
+              0,
+              this.windows,
+            );
+          this.skyline.add(building);
+        }
+        const rail = offset(d, side * 7.1, track);
+        const riser = this.box(
+          this.skyline,
+          0.38,
+          1.3,
+          0.7,
+          rail.x,
+          rail.y + 0.51,
+          rail.z,
+          this.concrete,
+        );
+        riser.rotation.y = -heading;
+        this.box(
+          this.skyline,
+          0.35,
+          0.16,
+          0.55,
+          rail.x,
+          rail.y + 1.13,
+          rail.z,
+          harbor ? this.windows : this.cyan,
+        );
+      }
+      const mark = center(d, track);
+      const tie = this.box(
+        this.skyline,
+        13,
+        0.09,
+        0.26,
+        mark.x,
+        mark.y + 0.025,
+        mark.z,
+        this.dark,
+      );
+      tie.rotation.y = -sampleTrack(track, d).heading;
+    }
+    const end = offset(track.length + 18, 14, track);
+    this.beacon.position.copy(end);
+    for (let i = 0; i < 6; i++) {
+      const column = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.8 - i * 0.43, 4.4 - i * 0.45, 6, 8),
+        i % 2 ? this.brass : this.concrete,
+      );
+      column.position.y = i * 5.6 - 1;
+      this.beacon.add(column);
+    }
+    const crown = new THREE.Mesh(
+      new THREE.OctahedronGeometry(3.3),
+      this.beaconCore,
+    );
+    crown.position.y = 32;
+    this.beacon.add(crown);
+    const beam = new THREE.Mesh(
+      new THREE.ConeGeometry(14, 230, 20, 1, true),
+      this.beamMaterial,
+    );
+    beam.position.set(0, 32, -115);
+    beam.rotation.x = Math.PI / 2;
+    const arm = new THREE.Group();
+    arm.add(beam);
+    this.beacon.add(arm);
+    this.beam = arm;
+    this.convoy.position.copy(offset(track.length - 5, 31, track));
+    for (let i = 0; i < 5; i++) {
+      const ship = new THREE.Group();
+      ship.position.set(i * 8 - 12, 8 + (i % 2) * 5, -i * 12);
+      ship.rotation.y = 0.55;
+      const fuselage = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.4, 2.2, 9, 6),
+        this.hull,
+      );
+      fuselage.rotation.x = Math.PI / 2;
+      ship.add(fuselage);
+      this.box(ship, 2.5, 0.85, 2.7, 0, 1, -0.6, this.concrete);
+      this.box(ship, 1.8, 0.24, 0.8, 0, 1.45, -0.5, this.gold);
+      for (const side of [-1, 1]) {
+        this.box(ship, 1.15, 0.48, 4, side * 2.1, 0, 1, this.dark);
+        this.box(ship, 0.8, 0.22, 0.8, side * 2.1, 0, 3, this.cyan);
+      }
+      this.convoy.add(ship);
+    }
+  }
+  private beam?: THREE.Group;
+
   private buildAtmosphere() {
     const random = (n: number) => {
       const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -383,7 +615,33 @@ export class World {
     this.camera.updateProjectionMatrix();
   }
   render(s: RaceState, active: boolean, time: number) {
+    const elapsed = Math.min(0.08, Math.max(0, time - this.previousTime));
+    this.previousTime = time;
+    const delivered = s.finished && this.track === COURSE;
+    this.intensity +=
+      (Number(delivered) - this.intensity) * (1 - Math.exp(-elapsed * 2.8));
+    this.beaconCore.color.set(delivered ? 0xffdb8e : 0x4c5964);
+    if (this.beam) {
+      this.beam.visible = delivered;
+      this.beam.rotation.y = this.low ? 0.8 : time * 0.36;
+    }
+    this.convoy.visible = delivered;
+    if (delivered) {
+      this.convoy.position.copy(
+        offset(this.track.length + this.intensity * 38, 31, this.track),
+      );
+      this.convoy.position.y += this.intensity * 6;
+    }
+    if (active && !this.lastPhase) this.lastDistance = -1;
+    this.lastPhase = active;
     const d = active ? s.distance : 30 + Math.sin(time * 0.08) * 12;
+    this.renderFlux(
+      d,
+      s.speed,
+      time,
+      s.boostRemaining > 0 ? s.thrust : 0,
+      active && !delivered && this.track === COURSE && d >= 530 && d < 1620,
+    );
     const p = offset(d, s.lateral, this.track);
     this.ship.position
       .copy(p)
@@ -396,38 +654,45 @@ export class World {
       );
     const dir = tangent(d, this.track);
     const yaw = Math.atan2(-dir.x, -dir.z);
-    const c = this.track.corners.find((c) => d >= c.start && d < c.end);
+    const bank = curvature(this.track, d) * 12;
     this.ship.rotation.set(
-      0,
-      yaw + (s.drifting ? (c?.direction ?? 1) * 0.32 : 0),
-      s.drifting ? -(c?.direction ?? 1) * 0.2 : 0,
+      -s.thrust * Number(s.boostRemaining > 0) * 0.1,
+      yaw - s.slip,
+      bank - s.slip * 0.6,
     );
     for (const flame of this.flames) {
       const boost = s.boostRemaining > 0;
       flame.scale.set(boost ? 1.6 : 1, boost ? 3 : 1, boost ? 1.6 : 1);
       flame.position.z = boost ? 4.2 : 2.6;
     }
-    let cameraD = d - 23,
-      side = 0,
-      height = 10;
-    if (!active) {
-      cameraD = d - 32;
-      side = -19;
-      height = 13;
-    }
+    const pushing = s.boostRemaining > 0 ? s.thrust : 0;
+    const cameraD = d - (delivered ? 49 : active ? 14 + pushing * 5 : 19);
+    const side = delivered ? -28 : active ? s.lateral * 0.58 : -14;
+    const height = delivered ? 24 : active ? 5.9 : 7;
     const cam = offset(cameraD, side, this.track).add(
       new THREE.Vector3(0, height, 0),
     );
-    if (this.lastDistance < 0 || Math.abs(d - this.lastDistance) > 50)
+    const target = offset(d + (active ? 24 : 20), active ? 0 : 7, this.track);
+    target.y += active ? 1.4 : 3;
+    if (delivered)
+      target.lerp(
+        this.beacon.position.clone().add(new THREE.Vector3(0, 18, 0)),
+        0.58,
+      );
+    if (this.lastDistance < 0 || Math.abs(d - this.lastDistance) > 50) {
       this.camera.position.copy(cam);
-    else this.camera.position.lerp(cam, 0.15);
-    this.camera.lookAt(
-      center(d + (active ? 40 : 38), this.track).add(
-        new THREE.Vector3(active ? 0 : 9, 0, 0),
-      ),
-    );
-    const targetFov = s.boostRemaining > 0 && !this.low ? 69 : 60;
-    this.camera.fov += (targetFov - this.camera.fov) * 0.05;
+      this.look.copy(target);
+    } else {
+      this.camera.position.lerp(cam, 1 - Math.exp(-elapsed * 7));
+      this.look.lerp(target, 1 - Math.exp(-elapsed * 8));
+    }
+    this.camera.lookAt(this.look);
+    if (!this.low && active && !delivered)
+      this.camera.rotateZ(bank * 0.35 - s.slip * 0.12);
+    this.sky?.position.copy(this.camera.position);
+    const targetFov = (delivered ? 64 : 60) + (this.low ? 0 : pushing * 12);
+    this.camera.fov +=
+      (targetFov - this.camera.fov) * (1 - Math.exp(-elapsed * 5));
     this.camera.updateProjectionMatrix();
     this.renderer.render(this.scene, this.camera);
     this.lastDistance = d;

@@ -10,6 +10,7 @@ const session = new Session(),
   audio = new AudioEngine();
 let world: World;
 let selected: Track = COURSE;
+let arrivalAt = 0;
 let lastPhase = "ready",
   lastFrame = performance.now(),
   lastFeedback = -10;
@@ -31,6 +32,10 @@ function setLow(value: boolean) {
 function start(track = selected) {
   if (session.phase === "racing" || session.phase === "countdown") return;
   selected = track;
+  arrivalAt = 0;
+  byId("arrival").hidden = true;
+  byId("radio").hidden = true;
+  if (!audio.enabled && !soundChosen) void toggleAudio(true);
   held = false;
   byId("drift").classList.remove("active");
   session.start(track, performance.now());
@@ -48,6 +53,8 @@ function start(track = selected) {
 }
 function home() {
   session.goHome();
+  byId("arrival").hidden = true;
+  byId("radio").hidden = true;
   selected = COURSE;
   held = false;
   world.setTrack(COURSE);
@@ -87,14 +94,19 @@ byId("restart").onclick = () => {
   interrupt();
   start();
 };
-byId("sound").onclick = async () => {
+let soundChosen = false;
+async function toggleAudio(enabled: boolean) {
   try {
-    await audio.enable(!audio.enabled);
+    await audio.enable(enabled);
     byId("sound").textContent = audio.enabled ? "Sound on" : "Sound off";
     byId("sound").setAttribute("aria-pressed", String(audio.enabled));
   } catch {
     byId("sound").textContent = "Sound unavailable";
   }
+}
+byId("sound").onclick = () => {
+  soundChosen = true;
+  void toggleAudio(!audio.enabled);
 };
 byId("effects").onclick = () => setLow(!low);
 byId("fullscreen").onclick = async () => {
@@ -162,11 +174,12 @@ function finish() {
   byId("results").hidden = false;
   byId("result-time").textContent = formatTime(s.time);
   byId("result-eyebrow").textContent =
-    selected === PRACTICE ? "FIRST FLIGHT COMPLETE" : "CIRCUIT COMPLETE";
+    selected === PRACTICE ? "HARBOR PRACTICE COMPLETE" : "BEACON ONLINE";
   byId("result-title").textContent =
-    s.perfects === selected.corners.length
-      ? "You found your flow."
-      : "Beautiful flight.";
+    selected === PRACTICE
+      ? "Ready for the real flight."
+      : "The fleet has a way home.";
+  byId("arrival").hidden = true;
   byId("personal-best").textContent = !saved
     ? "Finished! Local records could not be saved."
     : best === undefined
@@ -193,7 +206,7 @@ function finish() {
   );
   held = false;
   byId("drift").classList.remove("active");
-  audio.chime(false);
+
   byId("again").focus();
 }
 function frame(now: number) {
@@ -209,7 +222,22 @@ function frame(now: number) {
     s = session.sim.state,
     active = phase !== "ready";
   document.body.dataset.phase = phase;
-  if (phase === "finished" && lastPhase !== "finished") finish();
+  if (phase === "finished" && lastPhase !== "finished") {
+    arrivalAt = now;
+    if (selected === COURSE) {
+      byId("arrival").hidden = false;
+      byId("hud").hidden = true;
+      byId("radio").hidden = true;
+      audio.chime("arrival");
+    } else finish();
+  }
+  if (
+    phase === "finished" &&
+    selected === COURSE &&
+    !byId("arrival").hidden &&
+    now - arrivalAt >= 3300
+  )
+    finish();
   if (phase === "countdown")
     byId("countdown").textContent = String(
       Math.max(1, Math.ceil((session.startAt - now) / 1000)),
@@ -244,10 +272,23 @@ function frame(now: number) {
     byId("feedback").textContent =
       s.time - s.feedbackAt < 1.3 ? s.feedback : "";
     if (s.feedbackAt !== lastFeedback) {
-      if (s.feedback.includes("BOOST")) audio.chime(true);
+      if (s.feedback.includes("BOOST")) audio.chime("boost");
+      if (s.feedback === "RAIL CONTACT") audio.chime("contact");
       lastFeedback = s.feedbackAt;
     }
   }
+  if (selected === COURSE && phase === "racing") {
+    const radio =
+      s.distance < 120
+        ? "HARBOR CONTROL · Core secured. The fleet is waiting."
+        : s.distance >= 560 && s.distance < 700
+          ? "HARBOR CONTROL · Entering the storm channel."
+          : s.distance >= 1750 && s.distance < 1900
+            ? "HARBOR CONTROL · Lighthouse ahead. Bring them home."
+            : "";
+    if (byId("radio").textContent !== radio) byId("radio").textContent = radio;
+    byId("radio").hidden = !radio;
+  } else byId("radio").hidden = true;
   audio.update(s.speed, s.drifting, s.boostRemaining > 0, phase === "racing");
   try {
     world.render(s, active, now / 1000);

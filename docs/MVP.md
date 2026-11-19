@@ -4,7 +4,7 @@ Updated: 2026-11-19. This replaces the pre-implementation MVP plan; use QA.md fo
 
 ## Experience status
 
-V1 functionality is implemented, but MK rejected the experience on 2026-11-19. Treat the list below as prototype capabilities, not quality approval. See UPGRADE_V2.md for the proposed replacement direction.
+V1 functionality is implemented, but MK rejected the experience on 2026-11-19. Treat the list below as prototype capabilities, not quality approval. On 2026-11-19 Last Light replaced the prototype as the active experience. See UPGRADE_V2.md for the design and QA_V2.md for evidence. The v1 inventory below is historical.
 
 ## Implemented
 

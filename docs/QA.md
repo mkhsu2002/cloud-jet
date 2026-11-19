@@ -1,4 +1,6 @@
-# Verification and release status
+# V1 verification and release archive
+
+Archived on 2026-11-19 when Last Light replaced the v1 experience. See [v2 verification](QA_V2.md) for current status.
 
 Checked: 2026-11-19 (America/Vancouver). These results describe this sprint, not independent event validation.
 

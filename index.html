@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#07141e" />
     <meta
       name="description"
-      content="Find your flow above the clouds. A one-button hover-racing time trial: hold to drift, release to boost, chase your best time."
+      content="Carry the ignition core through the storm. Drift through the skyway and relight the beacon that guides the fleet home."
     />
-    <title>Cloud Jet — Drift & Boost</title>
+    <title>Cloud Jet — Last Light</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
@@ -23,7 +23,7 @@
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="Cloud Jet home"
         ><span class="brand-icon">⌁</span> CLOUD<span>JET</span
-        ><small>DRIFT & BOOST</small></a
+        ><small>LAST LIGHT</small></a
       >
       <div class="utilities">
         <button id="sound" aria-pressed="false">Sound off</button
@@ -34,28 +34,27 @@
     <main>
       <section id="home" class="home panel">
         <div class="eyebrow">
-          <span class="status-dot"></span> THE SKY IS YOUR CIRCUIT
+          <span class="status-dot"></span> COURIER FLIGHT 07
         </div>
-        <h1>FIND<br />YOUR <em>FLOW.</em></h1>
+        <h1>LAST<br /><em>LIGHT</em></h1>
         <p class="intro">
-          Chase the perfect line.<br />Turn a split second into pure speed.
+          The storm took the beacon. The fleet is still out there.<br />Carry
+          the ignition core to the lighthouse.
         </p>
         <div class="home-actions">
           <button class="primary" id="race">
-            Fly the circuit <span>↗</span></button
+            Launch mission <span>↗</span></button
           ><button class="secondary" id="practice">
-            Try one corner <span>→</span>
+            Practice the harbor turn <span>→</span>
           </button>
         </div>
         <div class="course-summary">
-          <span>01 <b>SKYLINE CIRCUIT</b></span
+          <span><b>BEACON DELIVERY</b></span
           ><span>5 CORNERS</span><span>ONE BUTTON</span>
         </div>
       </section>
       <aside id="home-instructions" class="instructions">
-        <div class="instruction-heading">
-          TWO MOMENTS. <span>ONE PERFECT RUN.</span>
-        </div>
+        <div class="instruction-heading">FLIGHT CONTROLS</div>
         <div class="instruction">
           <kbd>↓</kbd>
           <div>
@@ -75,11 +74,11 @@
       <section id="hud" hidden aria-label="Race dashboard">
         <div class="race-top">
           <div>
-            <span class="label" id="track-name">SKYLINE CIRCUIT</span>
+            <span class="label" id="track-name">LAST LIGHT</span>
             <div class="timer" id="timer">00:00.000</div>
           </div>
           <div class="race-progress">
-            <span id="corner-label">APPROACHING FIRST LIGHT</span>
+            <span id="corner-label">SILENT HARBOR</span>
             <div class="progress-track"><i id="progress"></i></div>
             <span id="distance">0 / 2450 M</span>
           </div>
@@ -106,10 +105,14 @@
           </button>
         </div>
       </section>
+      <section id="arrival" class="arrival" hidden aria-live="polite">
+        <strong>Beacon online</strong><span>The fleet is coming home.</span>
+      </section>
+      <p id="radio" class="radio" hidden aria-live="polite"></p>
       <section id="results" class="modal" hidden aria-labelledby="result-title">
         <div class="result-card">
-          <div class="eyebrow" id="result-eyebrow">CIRCUIT COMPLETE</div>
-          <h2 id="result-title">Beautiful flight.</h2>
+          <div class="eyebrow" id="result-eyebrow">BEACON ONLINE</div>
+          <h2 id="result-title">The fleet has a way home.</h2>
           <div id="result-time" class="result-time"></div>
           <p id="personal-best"></p>
           <div class="result-stats">
@@ -155,7 +158,7 @@
       </section>
     </main>
     <footer id="footer">
-      <span>BUILT FOR THE NEXT ATTEMPT.</span
+      <span>LAST LIGHT</span
       ><span
         >AN ORIGINAL GAME BY FLYPIG <span class="footer-star">✳</span></span
       >

@@ -1,3 +1,4 @@
+import { curvature } from "./track";
 export const STEP = 1 / 120;
 export interface Corner {
   start: number;
@@ -12,21 +13,21 @@ export interface Track {
   corners: Corner[];
 }
 export const PRACTICE: Track = {
-  id: "practice-v1",
-  name: "First Flight",
-  length: 650,
-  corners: [{ start: 180, end: 340, direction: 1, name: "THE ARC" }],
+  id: "harbor-v2",
+  name: "Harbor Shakedown",
+  length: 920,
+  corners: [{ start: 180, end: 340, direction: 1, name: "HARBOR TURN" }],
 };
 export const COURSE: Track = {
-  id: "skyline-v1",
-  name: "Skyline Circuit",
+  id: "last-light-v2",
+  name: "Last Light",
   length: 2450,
   corners: [
-    { start: 180, end: 340, direction: 1, name: "FIRST LIGHT" },
-    { start: 620, end: 800, direction: -1, name: "CLOUD BREAK" },
-    { start: 1060, end: 1240, direction: 1, name: "THE HALO" },
-    { start: 1500, end: 1680, direction: -1, name: "BLUE HOUR" },
-    { start: 1940, end: 2140, direction: 1, name: "HOME STRETCH" },
+    { start: 180, end: 340, direction: 1, name: "SILENT HARBOR" },
+    { start: 620, end: 800, direction: -1, name: "STORM CHANNEL" },
+    { start: 1060, end: 1240, direction: 1, name: "CLOUD BREAK" },
+    { start: 1500, end: 1680, direction: -1, name: "BEACON APPROACH" },
+    { start: 1940, end: 2140, direction: 1, name: "LAST LIGHT" },
   ],
 };
 export interface RaceState {
@@ -34,6 +35,10 @@ export interface RaceState {
   distance: number;
   speed: number;
   lateral: number;
+  lateralVelocity: number;
+  slip: number;
+  yawRate: number;
+  thrust: number;
   finished: boolean;
   drifting: boolean;
   energy: number;
@@ -53,6 +58,10 @@ function initial(): RaceState {
     distance: 0,
     speed: 32,
     lateral: 0,
+    lateralVelocity: 0,
+    slip: 0,
+    yawRate: 0,
+    thrust: 0,
     finished: false,
     drifting: false,
     energy: 0,
@@ -72,7 +81,7 @@ export class Simulation {
   private sequence = 0;
   private driftCorner: Corner | undefined;
   private used = new Set<Corner>();
-  private contactCooldown = 0;
+  private touchingWall = false;
   constructor(public track: Track) {}
   reset() {
     this.state = initial();
@@ -81,7 +90,7 @@ export class Simulation {
     this.sequence = 0;
     this.driftCorner = undefined;
     this.used.clear();
-    this.contactCooldown = 0;
+    this.touchingWall = false;
   }
   input(time: number, down: boolean) {
     if (!Number.isFinite(time) || this.state.finished) return;
@@ -106,7 +115,9 @@ export class Simulation {
       );
       s.entryQuality = this.driftCorner
         ? clamp(
-            1 - Math.abs(s.distance - (this.driftCorner.start - 20)) / 75,
+            1 -
+              Math.abs(s.distance - (this.driftCorner.start - 20)) /
+                Math.max(18, s.speed * 1.05),
             0,
             1,
           )
@@ -125,13 +136,15 @@ export class Simulation {
       const c = this.driftCorner;
       if (c && !this.used.has(c) && s.energy > 0.06) {
         const release = clamp(
-          1 - Math.abs(s.distance - (c.end - 10)) / 95,
+          1 - Math.abs(s.distance - (c.end - 10)) / Math.max(20, s.speed * 1.0),
           0,
           1,
         );
         const power =
           s.energy * (0.25 + 0.75 * release) * (0.45 + 0.55 * s.entryQuality);
-        s.boostRemaining = power * 4.5;
+        s.boostRemaining = power * 3.1;
+        s.thrust = power;
+        s.speed += 14 * power;
         s.boosts++;
         this.used.add(c);
         if (release > 0.82 && s.entryQuality > 0.82) s.perfects++;
@@ -164,27 +177,57 @@ export class Simulation {
     const corner = this.track.corners.find(
       (c) => s.distance >= c.start && s.distance < c.end,
     );
-    const correct = s.drifting && corner === this.driftCorner;
-    const quality = correct ? s.entryQuality : 0;
-    const boosted = s.boostRemaining > 0;
-    let targetSpeed = boosted ? 79 : 46;
-    if (s.drifting) targetSpeed = corner ? 35 + quality * 10 : 30;
-    else if (corner && !boosted) targetSpeed = 34;
-    if (correct)
-      s.energy = clamp(s.energy + STEP * (0.24 + 0.12 * quality), 0, 1);
-    s.boostRemaining = Math.max(0, s.boostRemaining - STEP);
-    const targetOffset = corner
-      ? corner.direction * (correct ? -1.4 + (1 - quality) * 6.5 : 6.2)
-      : 0;
-    s.lateral += (targetOffset - s.lateral) * STEP * 2;
-    this.contactCooldown = Math.max(0, this.contactCooldown - STEP);
-    if (Math.abs(s.lateral) > 5 && this.contactCooldown === 0) {
-      s.speed = Math.max(22, s.speed * 0.75);
-      s.contacts++;
-      this.contactCooldown = 0.85;
-      this.message("WALL GRAZE");
+    const active =
+      s.drifting &&
+      this.driftCorner !== undefined &&
+      s.distance < this.driftCorner.end + 17;
+    const quality = s.entryQuality;
+    const driftDirection = active ? this.driftCorner!.direction : 0;
+    const bend = curvature(this.track, s.distance);
+    const desiredSlip = driftDirection * (0.32 + 0.19 * quality);
+    s.yawRate += ((desiredSlip - s.slip) * 22 - s.yawRate * 8) * STEP;
+    s.slip += s.yawRate * STEP;
+    if (active && corner === this.driftCorner) {
+      s.energy = clamp(s.energy + STEP * (0.26 + 0.13 * quality), 0, 1);
     }
-    s.speed += (targetSpeed - s.speed) * STEP * 1.8;
+    const centrifugal = -bend * s.speed * s.speed;
+    const driftForce = Math.sin(s.slip) * (17 + 26 * quality);
+    const guidance = (active ? 3.8 : 5.3) * s.lateral;
+    const damping = active ? 2.9 : 5;
+    s.lateralVelocity +=
+      (centrifugal + driftForce - guidance - damping * s.lateralVelocity) *
+      STEP;
+    s.lateral += s.lateralVelocity * STEP;
+    if (Math.abs(s.lateral) >= 5.6) {
+      s.lateral = Math.sign(s.lateral) * 5.6;
+      s.lateralVelocity =
+        Math.sign(s.lateralVelocity) === Math.sign(s.lateral)
+          ? 0
+          : s.lateralVelocity;
+      if (!this.touchingWall) {
+        s.contacts++;
+        s.speed *= 0.83;
+        this.message("RAIL CONTACT");
+      }
+      this.touchingWall = true;
+      s.speed -= 6 * STEP;
+    } else if (Math.abs(s.lateral) < 5.4) {
+      this.touchingWall = false;
+    }
+    s.boostRemaining = Math.max(0, s.boostRemaining - STEP);
+    const curved = corner !== undefined;
+    const target =
+      s.boostRemaining > 0
+        ? 52 + s.thrust * 25
+        : curved
+          ? active
+            ? 35 + 9 * quality
+            : 33
+          : 47;
+    s.speed = Math.max(
+      20,
+      s.speed + clamp((target - s.speed) * 2.1, -22, 34) * STEP,
+    );
     s.distance = Math.min(this.track.length, s.distance + s.speed * STEP);
     if (s.distance >= this.track.length) {
       s.finished = true;

@@ -869,3 +869,66 @@ body.racing .wordmark small {
     font-size: 12px;
   }
 }
+
+.home h1 {
+  font-size: clamp(62px, 9vw, 138px);
+  letter-spacing: -0.075em;
+  line-height: 0.8;
+  color: #fff1df;
+}
+.home h1 em {
+  color: #ffd69a;
+}
+.home .intro {
+  max-width: 380px;
+}
+.home .primary {
+  background: #ffdb9c;
+}
+body:not(.racing) .vignette {
+  background:
+    linear-gradient(90deg, #071019e8, #0d152b13 74%),
+    linear-gradient(0deg, #080f1bd9, transparent 33%);
+}
+.radio,
+.arrival {
+  position: fixed;
+  z-index: 4;
+  text-align: center;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff1da;
+  background: #07141add;
+}
+.radio {
+  top: 18%;
+  padding: 0.7rem 1.2rem;
+  width: max-content;
+  max-width: 85vw;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+.arrival {
+  bottom: 12%;
+  padding: 1.4rem 2.4rem;
+  max-width: 90vw;
+  border-top: 2px solid #ffc77e;
+}
+.arrival strong,
+.arrival span {
+  display: block;
+}
+.arrival strong {
+  font-size: clamp(24px, 4vw, 52px);
+}
+.arrival span {
+  margin-top: 0.5rem;
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .home h1 {
+    font-size: 51px;
+  }
+  .radio {
+    top: 29%;
+  }
+}
