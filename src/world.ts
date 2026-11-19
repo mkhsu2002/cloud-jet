@@ -1,6 +1,7 @@
+import { RELAYS } from "./rescue";
 import { boostShot } from "./boost-presentation";
 import * as THREE from "three";
-import { COURSE, type RaceState, type Track } from "./simulation";
+import { COURSE, RESCUE, type RaceState, type Track } from "./simulation";
 import { sampleTrack, curvature } from "./track";
 import {
   courier,
@@ -73,6 +74,12 @@ export class World {
   private previousTime = 0;
   private gateSigns: { distance: number; sprite: THREE.Sprite }[] = [];
   private beacon = new THREE.Group();
+  private rescueFleet: {
+    group: THREE.Group;
+    relay: number;
+    window: number;
+    formation: number;
+  }[] = [];
   private convoy = new THREE.Group();
   private intensity = 0;
   private flux = new THREE.Group();
@@ -203,6 +210,7 @@ export class World {
     this.gateSigns = [];
     this.beacon.clear();
     this.convoy.clear();
+    this.rescueFleet = [];
     this.skyline.clear();
     this.roadFlow.clear();
     this.approachLamps.clear();
@@ -282,7 +290,7 @@ export class World {
         "HOLD  /  " + String(i + 1).padStart(2, "0"),
         this.gold,
       );
-      this.gate(c.end - 10, "RELEASE", this.cyan);
+      if (track !== RESCUE) this.gate(c.end - 10, "RELEASE", this.cyan);
     });
     this.gate(
       track.length,
@@ -290,6 +298,24 @@ export class World {
       this.gold,
     );
     this.buildRouteScenery(track);
+    if (track === RESCUE) {
+      RELAYS.forEach((windows, relay) =>
+        windows.forEach((window, index) => {
+          this.gate(
+            window.from,
+            window.ships === 2 ? "TWO SHIPS" : "ONE SHIP",
+            index ? this.gold : this.cyan,
+          );
+          for (let formation = 0; formation < window.ships; formation++) {
+            const group = new THREE.Group();
+            fleetShip(group);
+            group.scale.setScalar(formation ? 0.84 : 0.95);
+            this.courseGroup.add(group);
+            this.rescueFleet.push({ group, relay, window: index, formation });
+          }
+        }),
+      );
+    }
     this.courseGroup.add(this.roadFlow);
     const light = new THREE.MeshBasicMaterial({ color: 0x8faebb });
     const marker = new THREE.BoxGeometry(0.24, 0.06, 1.7);
@@ -617,7 +643,8 @@ export class World {
   render(s: RaceState, active: boolean, time: number) {
     const elapsed = Math.min(0.08, Math.max(0, time - this.previousTime));
     this.previousTime = time;
-    const delivered = s.finished && this.track === COURSE;
+    const delivered =
+      s.finished && (this.track === COURSE || this.track === RESCUE);
     if (s.boosts < this.seenBoosts) this.resetBoost();
     if (s.boosts > this.seenBoosts) {
       this.ignitionAt = s.time;
@@ -642,6 +669,18 @@ export class World {
       light.visible = this.arrivalTime > 0.5 + i * 0.072;
     });
     this.convoy.visible = delivered && this.arrivalTime > 0.82;
+    if (this.track === RESCUE) {
+      const count = s.rescues.reduce<number>(
+        (total, ships) => total + (ships ?? 0),
+        0,
+      );
+      this.convoy.children.forEach((ship, index) => {
+        ship.visible = index < count;
+      });
+    } else
+      this.convoy.children.forEach((ship) => {
+        ship.visible = true;
+      });
     if (delivered) {
       const distance = THREE.MathUtils.smoothstep(this.arrivalTime, 1.05, 4.4);
       this.convoy.position.copy(
@@ -654,6 +693,25 @@ export class World {
     if (active && !this.lastPhase) this.lastDistance = -1;
     this.lastPhase = active;
     const d = active ? s.distance : 30 + Math.sin(time * 0.08) * 12;
+    for (const { group, relay, window, formation } of this.rescueFleet) {
+      const gate = RELAYS[relay][window];
+      const result = s.rescues[relay];
+      const saved = result === gate.ships;
+      const forward = saved ? Math.min(54, Math.max(0, d - gate.from)) : 0;
+      const shipDistance =
+        (gate.from + gate.to) * 0.5 + formation * 10 + forward;
+      group.position.copy(
+        offset(
+          shipDistance,
+          (window === 1 ? -1 : 1) * (13 + formation * 5),
+          this.track,
+        ),
+      );
+      group.position.y += 5 + formation * 3 + forward * 0.12;
+      group.rotation.y = -sampleTrack(this.track, shipDistance).heading;
+      group.visible =
+        !delivered && d < gate.to + 45 && (result === null || saved);
+    }
     for (const { distance, sprite } of this.gateSigns) {
       sprite.material.opacity = THREE.MathUtils.smoothstep(distance - d, -2, 6);
       sprite.visible = sprite.material.opacity > 0 && !delivered;

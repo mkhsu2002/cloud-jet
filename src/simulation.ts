@@ -1,4 +1,5 @@
 import { curvature } from "./track";
+import { RELAYS, resolveRelay, type RescueOutcome } from "./rescue";
 export const STEP = 1 / 120;
 export interface Corner {
   start: number;
@@ -30,7 +31,14 @@ export const COURSE: Track = {
     { start: 1940, end: 2140, direction: 1, name: "LAST LIGHT" },
   ],
 };
+export const RESCUE: Track = {
+  id: "convoy-rescue-v1",
+  name: "Convoy Rescue",
+  length: 1040,
+  corners: COURSE.corners.slice(0, 2),
+};
 export interface RaceState {
+  rescues: RescueOutcome[];
   time: number;
   distance: number;
   speed: number;
@@ -52,8 +60,9 @@ export interface RaceState {
 }
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v));
-function initial(): RaceState {
+function initial(track: Track): RaceState {
   return {
+    rescues: track === RESCUE ? RELAYS.map(() => null) : [],
     time: 0,
     distance: 0,
     speed: 32,
@@ -75,16 +84,18 @@ function initial(): RaceState {
   };
 }
 export class Simulation {
-  state = initial();
+  state: RaceState;
   private ticks = 0;
   private queue: { time: number; down: boolean; order: number }[] = [];
   private sequence = 0;
   private driftCorner: Corner | undefined;
   private used = new Set<Corner>();
   private touchingWall = false;
-  constructor(public track: Track) {}
+  constructor(public track: Track) {
+    this.state = initial(track);
+  }
   reset() {
-    this.state = initial();
+    this.state = initial(this.track);
     this.ticks = 0;
     this.queue = [];
     this.sequence = 0;
@@ -148,13 +159,26 @@ export class Simulation {
         s.boosts++;
         this.used.add(c);
         if (release > 0.82 && s.entryQuality > 0.82) s.perfects++;
-        this.message(
-          release > 0.82
-            ? "PERFECT BOOST"
-            : s.distance < c.end - 10
-              ? "EARLY BOOST"
-              : "LATE BOOST",
-        );
+        const relay = this.track.corners.indexOf(c);
+        if (s.rescues[relay] === null) {
+          const outcome = resolveRelay(relay, s.distance, s.energy);
+          s.rescues[relay] = outcome;
+          this.message(
+            outcome === 0
+              ? "RELAY MISSED"
+              : outcome === 1
+                ? "1 SHIP RESCUED"
+                : "2 SHIPS RESCUED",
+          );
+        } else {
+          this.message(
+            release > 0.82
+              ? "PERFECT BOOST"
+              : s.distance < c.end - 10
+                ? "EARLY BOOST"
+                : "LATE BOOST",
+          );
+        }
       } else this.message("KEEP YOUR MOMENTUM");
       s.energy = 0;
       this.driftCorner = undefined;
@@ -229,6 +253,16 @@ export class Simulation {
       s.speed + clamp((target - s.speed) * 2.1, -22, 34) * STEP,
     );
     s.distance = Math.min(this.track.length, s.distance + s.speed * STEP);
+    for (let relay = 0; relay < s.rescues.length; relay++) {
+      const windows = RELAYS[relay];
+      if (
+        s.rescues[relay] === null &&
+        s.distance > windows[windows.length - 1].to
+      ) {
+        s.rescues[relay] = 0;
+        this.message("RELAY MISSED");
+      }
+    }
     if (s.distance >= this.track.length) {
       s.finished = true;
       s.drifting = false;

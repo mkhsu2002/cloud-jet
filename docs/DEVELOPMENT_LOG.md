@@ -85,3 +85,11 @@ Verified the current Devpost Category 3 rules and Submission Specifics. Added pa
 MK rejected the current arcade time trial as too conventional for the competition. Rechecked the live rules and Submission Specifics. They require genuine use of an eligible JetBrains tool alongside any other editor or coding assistant, and judge the depth of that use. The prior WebStorm CLI inspection is documented as static analysis. IDE debugging, in-IDE test execution, trial activation and eligibility approval have not been verified.
 
 Opened the native WebStorm application to run the existing Vitest regressions in the IDE. The first-launch WebStorm User Agreement appeared and blocks entry to the project. Left the agreement on screen for MK to review. No agreement was accepted, and no interactive test or debugger session ran.
+
+## 2026-11-19 · Two-turn convoy rescue prototype
+
+Implemented a harbor relay and two mutually exclusive storm relay windows. It is possible to rescue one ship early, hold for the two-ship window with enough energy, or miss and still finish. The result is committed on the successful drift release, resets on replay, and controls how many ships appear at the lighthouse. The prototype has its own mode and does not write the time-trial leaderboard.
+
+Played both choices in Chrome from the local production build. The early release brought two ships home in total and the later release brought three. Checked the displayed cue, arrival scene, sector results and replay. Terminal Vitest passed 19 tests, including four new rescue regressions for distinct outcomes, missed windows, repeated attempts, charge boundaries and reset. TypeScript, formatting and production build also passed.
+
+MK confirmed acceptance of the WebStorm User Agreement. The native app progressed to Manage Licenses, which displayed that the account had no valid licenses. The app remained on that screen after rechecking. No interactive debugger or IDE test run occurred in this session. The terminal test results are separate from JetBrains tooling evidence.

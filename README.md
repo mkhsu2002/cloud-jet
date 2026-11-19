@@ -11,6 +11,7 @@ The v2 mission replaces the original time-trial prototype. See the [v2 redesign]
 **[Play Cloud Jet](https://cloud-jet.pages.dev)** in a modern browser with WebGL 2 and hardware acceleration. No login is required. See [release status](docs/QA_V2.md) for verified checks and limitations.
 
 - **Last Light**: a 2,450 m mission with five corners, three route beats and a beacon arrival scene.
+- **Convoy Rescue**: a two-bend prototype. Charge the harbor relay for one ship, then release early in the storm to guide one ship or hold for the later pair. The lighthouse ending shows the ships guided home. Rescue runs have their own results and do not enter the regular time-trial leaderboard.
 - **Harbor Shakedown**: a 920 m single-corner practice course.
 - **Compare harbor flights**: two playable views of the same harbor turn with the speed display and boost text hidden. Comparison flights have their own replay flow and do not write the local leaderboard.
 - Press **Space** at the gold entry line, hold through the bend, release at the cyan exit line. The on-screen button supports the same mouse/touch hold-and-release action.

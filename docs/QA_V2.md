@@ -37,3 +37,7 @@ The 2026 Category 3 Submission Specifics page was read successfully. It describe
 After the one-corner checks, the full local production route completed in 42.700 seconds with five boosts and zero rail contacts, followed by the beacon ending and results. WebStorm ran the Default source inspection across the new timing code. The regression suite ran separately in the terminal.
 
 Published from `d31391f2c5b5b20639dc11918525f82088f5a079` as Cloudflare Pages deployment `8b764e41-c736-42e5-8ba3-e1262f89a439` after [GitHub quality run](https://github.com/mkhsu2002/cloud-jet/actions/runs/44610294822) passed. The page, script, stylesheet and score matched the verified build. On the public URL, both A and B completed one boost and reached results with the speed block and boost text hidden and an enabled link to the other flight. Public A took 17.675 seconds and B took 17.692 seconds.
+
+## Two-turn Convoy Rescue
+
+The browser entry is `/?mission=rescue`. Chrome keyboard runs used harbor release near 329 m for both attempts and storm releases near 740 m or 790 m. The earlier run finished with Harbor 1 and Storm Channel 1. The later run finished with Harbor 1 and Storm Channel 2. The beacon sequence showed the corresponding two and three ships returning. Verified replay and Space to advance to results. The terminal suite passed 19 tests, covering missed windows and one-time scoring as well as existing game behavior. WebStorm IDE debugging and testing remain blocked at Manage Licenses. No license material is stored in this project.
