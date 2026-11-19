@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#07141e" />
+    <meta
+      name="description"
+      content="Find your flow above the clouds. A one-button hover-racing time trial: hold to drift, release to boost, chase your best time."
+    />
+    <title>Cloud Jet — Drift & Boost</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <canvas
+      id="world"
+      aria-label="A floating race circuit above the clouds"
+    ></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="wordmark" href="./" aria-label="Cloud Jet home"
+        ><span class="brand-icon">⌁</span> CLOUD<span>JET</span
+        ><small>DRIFT & BOOST</small></a
+      >
+      <div class="utilities">
+        <button id="sound" aria-pressed="false">Sound off</button
+        ><button id="effects" aria-pressed="false">Low effects</button
+        ><button id="fullscreen">Full screen ↗</button>
+      </div>
+    </header>
+    <main>
+      <section id="home" class="home panel">
+        <div class="eyebrow">
+          <span class="status-dot"></span> THE SKY IS YOUR CIRCUIT
+        </div>
+        <h1>FIND<br />YOUR <em>FLOW.</em></h1>
+        <p class="intro">
+          Chase the perfect line.<br />Turn a split second into pure speed.
+        </p>
+        <div class="home-actions">
+          <button class="primary" id="race">
+            Fly the circuit <span>↗</span></button
+          ><button class="secondary" id="practice">
+            Try one corner <span>→</span>
+          </button>
+        </div>
+        <div class="course-summary">
+          <span>01 <b>SKYLINE CIRCUIT</b></span
+          ><span>5 CORNERS</span><span>ONE BUTTON</span>
+        </div>
+      </section>
+      <aside id="home-instructions" class="instructions">
+        <div class="instruction-heading">
+          TWO MOMENTS. <span>ONE PERFECT RUN.</span>
+        </div>
+        <div class="instruction">
+          <kbd>↓</kbd>
+          <div>
+            <b>HOLD TO DRIFT</b>
+            <p>Press at the gold entry line. Hold through the bend.</p>
+          </div>
+        </div>
+        <div class="instruction">
+          <kbd>↑</kbd>
+          <div>
+            <b>RELEASE TO BOOST</b>
+            <p>Let go at the exit line. Feel the rush.</p>
+          </div>
+        </div>
+        <p class="input-note">Use <kbd>SPACE</kbd> or the on-screen button.</p>
+      </aside>
+      <section id="hud" hidden aria-label="Race dashboard">
+        <div class="race-top">
+          <div>
+            <span class="label" id="track-name">SKYLINE CIRCUIT</span>
+            <div class="timer" id="timer">00:00.000</div>
+          </div>
+          <div class="race-progress">
+            <span id="corner-label">APPROACHING FIRST LIGHT</span>
+            <div class="progress-track"><i id="progress"></i></div>
+            <span id="distance">0 / 2450 M</span>
+          </div>
+          <button id="restart" class="quiet">Restart ↺</button>
+        </div>
+        <div id="countdown" class="countdown" aria-live="assertive"></div>
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div class="race-bottom">
+          <div class="speed-block">
+            <span class="label">VELOCITY</span><strong id="speed">0</strong
+            ><span class="speed-unit">KM/H</span>
+          </div>
+          <div class="timing-guide">
+            <div id="cue" class="cue">FIND THE GOLD LINE</div>
+            <div class="energy-rail"><i id="energy"></i></div>
+            <span class="label" id="energy-label">DRIFT ENERGY</span>
+          </div>
+          <button
+            id="drift"
+            class="drift-button"
+            aria-label="Hold to drift, release to boost"
+          >
+            <span>HOLD</span><b>DRIFT</b><small>RELEASE TO BOOST</small>
+          </button>
+        </div>
+      </section>
+      <section id="results" class="modal" hidden aria-labelledby="result-title">
+        <div class="result-card">
+          <div class="eyebrow" id="result-eyebrow">CIRCUIT COMPLETE</div>
+          <h2 id="result-title">Beautiful flight.</h2>
+          <div id="result-time" class="result-time"></div>
+          <p id="personal-best"></p>
+          <div class="result-stats">
+            <div>
+              <strong id="result-perfect">0/5</strong
+              ><span>PERFECT CORNERS</span>
+            </div>
+            <div><strong id="result-boost">0</strong><span>BOOSTS</span></div>
+            <div>
+              <strong id="result-contact">0</strong><span>WALL GRAZES</span>
+            </div>
+          </div>
+          <button id="again" class="primary">
+            Chase a better line <span>↗</span></button
+          ><button id="back" class="quiet">Back to hangar</button>
+          <div class="leaderboard">
+            <h3>FASTEST FLIGHTS <span>ON THIS DEVICE</span></h3>
+            <ol id="records"></ol>
+          </div>
+        </div>
+      </section>
+      <section id="paused" class="modal" hidden aria-labelledby="pause-title">
+        <div class="pause-card">
+          <div class="eyebrow">TAKE A BREATH</div>
+          <h2 id="pause-title">Ready when you are.</h2>
+          <p>
+            The flight was interrupted.<br />Start a fresh run to set your time.
+          </p>
+          <button id="resume" class="primary">
+            Start a new flight <span>↗</span></button
+          ><button id="pause-back" class="quiet">Back to hangar</button>
+        </div>
+      </section>
+      <section id="graphics-error" class="modal" hidden>
+        <div class="pause-card">
+          <h2>Let's get you flying.</h2>
+          <p id="graphics-message">
+            This game needs WebGL 2. Try a current browser with hardware
+            acceleration enabled.
+          </p>
+          <button onclick="location.reload()" class="primary">Try again</button>
+        </div>
+      </section>
+    </main>
+    <footer id="footer">
+      <span>BUILT FOR THE NEXT ATTEMPT.</span
+      ><span
+        >AN ORIGINAL GAME BY FLYPIG <span class="footer-star">✳</span></span
+      >
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

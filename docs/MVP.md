@@ -1,30 +1,19 @@
-# MVP delivery plan
+# MVP delivery status
 
-## 1. Prove the handling
+Updated: 2026-11-19. This replaces the pre-implementation MVP plan; use QA.md for actual check results.
 
-Implement a deterministic simulation separated from Three.js rendering: input timestamps, vehicle state, track progress, drift energy, wall contact and boost. Fixed simulation steps should give comparable results across render rates. Use a monotonic clock and avoid artificial score-only penalties.
+## Implemented
 
-Prototype one straight, one bend, one exit straight. Map Space down to drift entry, held to continuous drift, up to boost exit. Key-repeat must not restart a drift. Establish ideal entry and exit windows in configuration, then tune by playtesting, not assumed constants.
+- Deterministic fixed-step simulation, ordered timestamped input, drift entry/hold/release, speed, wall contact and forgiving completion.
+- Single-corner First Flight practice and full five-corner Skyline Circuit.
+- Countdown, finish timer, clean restart, local per-course leaderboard and storage-failure handling.
+- Keyboard and on-screen pointer controls; key-repeat suppression; lost-focus/tab-suspension interruption.
+- Original 3D vehicle/track/scenery, drift line and boost feedback, opt-in synthesized audio, low-effects mode and reduced-motion default.
+- Responsive interface and locally served offline build with bundled assets.
+- Automated timing/replay/reset/recovery/lifecycle/storage tests; path-filtered CI.
 
-Acceptance: well-timed inputs visibly beat early/late inputs; late release visibly delays acceleration; mistakes still finish. Missing input must not trap the vehicle.
+## Validation and competition work
 
-## 2. Complete a time trial
+See QA.md for observed automated and browser results. A developer-machine test is not proof of every booth device, true physical touch hardware, unattended multi-hour reliability or independent playtest success.
 
-One fixed track, countdown, finish timer, immediate replay, local leaderboard. Target 45–75 seconds. Prevent double-starts and reset all state on replay. Pause or safely cancel on focus loss so a lost key-up cannot stick drift. No network dependency during a race.
-
-## 3. Polish for a booth
-
-Hovercraft, clouds, track readability, clear boost feedback, scalable graphics quality, sound mute, reduced visual effects option and large readable results. Use original placeholder assets until provenance is documented. Provide a short attract loop and one-screen instruction.
-
-## Test matrix
-
-- Ideal / early / late entry and release; release outside a bend; never press; never release.
-- Held key auto-repeat, repeated restart, window blur, tab suspension, resize.
-- Compare 30 / 60 / 120 fps render schedules against identical timestamped input replays.
-- Wall contacts must cost time but never cause a soft lock.
-- Repeated races reset timers, energy, input, rank and vehicle state.
-- Offline test and prolonged booth soak test.
-
-## Submission gate (verify current official rules before submitting)
-
-Public source and open-source license; accessible demo; concise public video; truthful JetBrains usage evidence; asset provenance; installation/play instructions. No submission or deployment is performed by repository setup.
+Interactive WebStorm debugging/tests, external playtests, final demo video, current Submission Specifics review, registration/eligibility confirmation and binding final submission are separate unfinished competition tasks. No finished-game feature list should be read as a completed competition submission.

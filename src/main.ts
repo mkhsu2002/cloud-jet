@@ -1,0 +1,277 @@
+import "./style.css";
+import { World } from "./world";
+import { Session } from "./session";
+import { COURSE, PRACTICE, type Track } from "./simulation";
+import { readRecords, saveRecord, type Store } from "./records";
+import { AudioEngine } from "./audio";
+const byId = <T extends HTMLElement = HTMLElement>(id: string) =>
+  document.getElementById(id) as T;
+const session = new Session(),
+  audio = new AudioEngine();
+let world: World;
+let selected: Track = COURSE;
+let lastPhase = "ready",
+  lastFrame = performance.now(),
+  lastFeedback = -10;
+let held = false,
+  low = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store: Store = {
+  getItem: (k) => window.localStorage.getItem(k),
+  setItem: (k, v) => window.localStorage.setItem(k, v),
+};
+export function formatTime(time: number) {
+  const ms = Math.round(time * 1000);
+  return `${String(Math.floor(ms / 60000)).padStart(2, "0")}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}.${String(ms % 1000).padStart(3, "0")}`;
+}
+function setLow(value: boolean) {
+  low = value;
+  world?.setLow(low);
+  byId("effects").setAttribute("aria-pressed", String(low));
+}
+function start(track = selected) {
+  if (session.phase === "racing" || session.phase === "countdown") return;
+  selected = track;
+  held = false;
+  byId("drift").classList.remove("active");
+  session.start(track, performance.now());
+  world.setTrack(track);
+  lastFeedback = -10;
+  byId("home").hidden = true;
+  byId("home-instructions").hidden = true;
+  byId("footer").hidden = true;
+  byId("hud").hidden = false;
+  byId("results").hidden = true;
+  byId("paused").hidden = true;
+  byId("track-name").textContent = track.name.toUpperCase();
+  document.body.classList.add("racing");
+  byId("drift").focus({ preventScroll: true });
+}
+function home() {
+  session.goHome();
+  selected = COURSE;
+  held = false;
+  world.setTrack(COURSE);
+  byId("hud").hidden = true;
+  byId("results").hidden = true;
+  byId("paused").hidden = true;
+  byId("home").hidden = false;
+  byId("home-instructions").hidden = false;
+  byId("footer").hidden = false;
+  document.body.classList.remove("racing");
+  byId("race").focus();
+}
+function interrupt() {
+  session.interrupt();
+  held = false;
+  byId("drift").classList.remove("active");
+  if (session.phase === "paused") {
+    byId("paused").hidden = false;
+    byId("hud").hidden = true;
+    byId("resume").focus();
+  }
+}
+function input(down: boolean) {
+  if (down === held) return;
+  if (session.phase !== "racing") return;
+  held = down;
+  session.input(performance.now(), down);
+  byId("drift").classList.toggle("active", down);
+}
+byId("race").onclick = () => start(COURSE);
+byId("practice").onclick = () => start(PRACTICE);
+byId("again").onclick = () => start();
+byId("resume").onclick = () => start();
+byId("back").onclick = home;
+byId("pause-back").onclick = home;
+byId("restart").onclick = () => {
+  interrupt();
+  start();
+};
+byId("sound").onclick = async () => {
+  try {
+    await audio.enable(!audio.enabled);
+    byId("sound").textContent = audio.enabled ? "Sound on" : "Sound off";
+    byId("sound").setAttribute("aria-pressed", String(audio.enabled));
+  } catch {
+    byId("sound").textContent = "Sound unavailable";
+  }
+};
+byId("effects").onclick = () => setLow(!low);
+byId("fullscreen").onclick = async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    byId("fullscreen").textContent = "Use browser full screen";
+  }
+};
+document.addEventListener("fullscreenchange", () => {
+  byId("fullscreen").textContent = document.fullscreenElement
+    ? "Exit full screen ↙"
+    : "Full screen ↗";
+});
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Escape") {
+    interrupt();
+    return;
+  }
+  if (e.code !== "Space" || e.repeat) return;
+  const target = e.target as HTMLElement;
+  if (target.tagName === "BUTTON" && target.id !== "drift") return;
+  e.preventDefault();
+  if (
+    session.phase === "ready" ||
+    session.phase === "finished" ||
+    session.phase === "paused"
+  )
+    start();
+  else input(true);
+});
+window.addEventListener("keyup", (e) => {
+  if (e.code === "Space") {
+    if (
+      (e.target as HTMLElement).id === "drift" ||
+      (e.target as HTMLElement).tagName !== "BUTTON"
+    )
+      e.preventDefault();
+    input(false);
+  }
+});
+byId("drift").addEventListener("pointerdown", (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  byId("drift").setPointerCapture(e.pointerId);
+  input(true);
+});
+byId("drift").addEventListener("pointerup", () => input(false));
+byId("drift").addEventListener("pointercancel", () => interrupt());
+window.addEventListener("blur", () => interrupt());
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) interrupt();
+});
+function finish() {
+  const s = session.sim.state;
+  const records = readRecords(store, selected.id);
+  const best = records[0]?.time;
+  const saved = saveRecord(store, selected.id, {
+    time: s.time,
+    perfects: s.perfects,
+    date: new Date().toISOString().slice(0, 10),
+  });
+  byId("hud").hidden = true;
+  byId("results").hidden = false;
+  byId("result-time").textContent = formatTime(s.time);
+  byId("result-eyebrow").textContent =
+    selected === PRACTICE ? "FIRST FLIGHT COMPLETE" : "CIRCUIT COMPLETE";
+  byId("result-title").textContent =
+    s.perfects === selected.corners.length
+      ? "You found your flow."
+      : "Beautiful flight.";
+  byId("personal-best").textContent = !saved
+    ? "Finished! Local records could not be saved."
+    : best === undefined
+      ? "Your first flight. Your next time to beat."
+      : s.time < best
+        ? "NEW PERSONAL BEST"
+        : `${(s.time - best).toFixed(3)}s from your best. One more flight?`;
+  byId("result-perfect").textContent =
+    `${s.perfects}/${selected.corners.length}`;
+  byId("result-boost").textContent = String(s.boosts);
+  byId("result-contact").textContent = String(s.contacts);
+  byId("records").replaceChildren(
+    ...readRecords(store, selected.id)
+      .slice(0, 5)
+      .map((r, i) => {
+        const li = document.createElement("li");
+        const left = document.createElement("span");
+        left.textContent = `${String(i + 1).padStart(2, "0")}   ${r.date}`;
+        const right = document.createElement("span");
+        right.textContent = formatTime(r.time);
+        li.append(left, right);
+        return li;
+      }),
+  );
+  held = false;
+  byId("drift").classList.remove("active");
+  audio.chime(false);
+  byId("again").focus();
+}
+function frame(now: number) {
+  const gap = now - lastFrame;
+  lastFrame = now;
+  if (
+    gap > 1500 &&
+    (session.phase === "racing" || session.phase === "countdown")
+  )
+    interrupt();
+  session.update(now);
+  const phase = session.phase,
+    s = session.sim.state,
+    active = phase !== "ready";
+  document.body.dataset.phase = phase;
+  if (phase === "finished" && lastPhase !== "finished") finish();
+  if (phase === "countdown")
+    byId("countdown").textContent = String(
+      Math.max(1, Math.ceil((session.startAt - now) / 1000)),
+    );
+  else
+    byId("countdown").textContent =
+      phase === "racing" && s.time < 0.65 ? "GO" : "";
+  if (phase === "racing" || phase === "countdown") {
+    byId("timer").textContent = formatTime(s.time);
+    byId("speed").textContent = String(Math.round(s.speed * 3.6));
+    byId("progress").style.width = `${(s.distance / selected.length) * 100}%`;
+    byId("distance").textContent =
+      `${Math.floor(s.distance)} / ${selected.length} M`;
+    const next = selected.corners.find((c) => s.distance < c.end + 15);
+    const inCorner = next && s.distance >= next.start;
+    byId("corner-label").textContent = next
+      ? `${inCorner ? "" : "APPROACHING "}${next.name}`
+      : "FINAL STRAIGHT";
+    let cue = next ? "FIND THE GOLD LINE" : "FLY IT HOME";
+    if (next && s.distance > next.start - 65 && !s.drifting)
+      cue = "PRESS AT THE GOLD LINE ↓";
+    if (s.drifting)
+      cue =
+        next && s.distance > next.end - 45
+          ? "RELEASE AT THE EXIT ↑"
+          : "HOLD YOUR LINE";
+    if (s.boostRemaining > 0) cue = "BOOSTING ↗";
+    byId("cue").textContent = cue;
+    byId("energy").style.width = `${s.energy * 100}%`;
+    byId("energy-label").textContent =
+      s.boostRemaining > 0 ? "EXIT SPEED" : "DRIFT ENERGY";
+    byId("feedback").textContent =
+      s.time - s.feedbackAt < 1.3 ? s.feedback : "";
+    if (s.feedbackAt !== lastFeedback) {
+      if (s.feedback.includes("BOOST")) audio.chime(true);
+      lastFeedback = s.feedbackAt;
+    }
+  }
+  audio.update(s.speed, s.drifting, s.boostRemaining > 0, phase === "racing");
+  try {
+    world.render(s, active, now / 1000);
+  } catch {
+    interrupt();
+    byId("graphics-message").textContent =
+      "The flight display stopped. Reload to start fresh.";
+    byId("graphics-error").hidden = false;
+    return;
+  }
+  lastPhase = phase;
+  requestAnimationFrame(frame);
+}
+try {
+  world = new World(byId<HTMLCanvasElement>("world"));
+  setLow(low);
+  byId("world").addEventListener("webglcontextlost", (e) => {
+    e.preventDefault();
+    interrupt();
+    byId("graphics-message").textContent =
+      "The graphics connection was interrupted. Reload to start fresh.";
+    byId("graphics-error").hidden = false;
+  });
+  requestAnimationFrame(frame);
+} catch {
+  byId("graphics-error").hidden = false;
+}

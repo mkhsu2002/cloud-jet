@@ -1,33 +1,28 @@
-# JetBrains engineering workflow
+# JetBrains engineering evidence
 
-## Planned role
+Updated: 2026-11-19.
 
-Codex remains the main development assistant. WebStorm is the inspection, debugging and test workbench for the timing-critical TypeScript simulation. There is no need to install Unity, Rider or Toolbox for this browser-first plan.
+## Actual use
 
-After the game scaffold exists:
-1. Open this repository in WebStorm and select the project's supported Node runtime.
-2. Install pinned project dependencies using the lockfile. Run the dev server from the package.json gutter.
-3. Debug input events and drift/boost state transitions, checking event timestamps against simulation time.
-4. Run the timing/replay test suite from the IDE. Inspect failures and review refactors with TypeScript inspections.
-5. Record the real version, task, test results, relevant commit and optional screenshot in DEVELOPMENT_LOG.md.
+WebStorm 2026.3, build WS-263.7307.202, ran its offline project inspection through the bundled `inspect.sh` tool with the Default profile. The scan processed the TypeScript source, tests, HTML, CSS, package configuration and local server script, and exited successfully. It was an actual inspection, not merely an installation screenshot.
 
-Suggested regression cases: early/late release, lost focus while holding, key-repeat, frame-rate variation and clean restart. Do not replace evidence of actual IDE work with an installation screenshot.
+The first inspection identified an ambiguous DOM-helper name that triggered jQuery heuristics, an unresolved Node process reference, and a server-listen signature warning. The helper was renamed, process imported explicitly, and the server configured through the listen options object. These changes were reviewed and verified with TypeScript/build/tests. Additional unused-symbol warnings on structural storage test doubles and prose style suggestions are not evidence of game failures.
 
-Junie / Air is optional, not yet configured or used. Do not sign up for a paid plan or claim AI-generated test coverage without actually reviewing and running it.
+## Remaining interactive work
 
-## Runtime caveat
+Do not claim interactive breakpoint debugging or test execution inside the IDE yet. To collect those distinct forms of evidence:
 
-The setup machine initially has Node 23.9.0. Before creating the Vite/Three.js scaffold, select a supported LTS runtime compatible with the versions chosen. Do not assume an installed Node version is suitable just because it runs.
+1. Open the repository in WebStorm. MK completes any required first-launch, account or license interaction.
+2. Set the project's Node runtime to 24.22.3 and install pinned packages with `npm ci`.
+3. Run `dev` from package.json and debug `Simulation.apply`/`step` with a real press/release interaction; compare event timestamps with simulation time.
+4. Run `tests/simulation.test.ts` from the IDE and inspect timing/replay results.
+5. Add the actual action, version, result and commit to DEVELOPMENT_LOG.md; review screenshots for private information.
 
-## Official references
+No Unity, Rider or Toolbox is needed for this stack. Junie and Air have not been used. A paid subscription is not required by this project's technical plan, and none has been purchased by this task.
 
-- https://www.jetbrains.com/webstorm/
+## References
+
+- https://www.jetbrains.com/help/webstorm/command-line-code-inspector.html
 - https://www.jetbrains.com/help/webstorm/configuring-javascript-debugger.html
 - https://www.jetbrains.com/help/webstorm/unit-testing-javascript.html
 - https://cloud9.devpost.com/rules
-
-## Status
-
-See DEVELOPMENT_LOG.md for observed setup results. Installation, first launch / license activation, actual debugging, and actual test execution are separate milestones.
-
-WebStorm 2026.3 (Apple Silicon) has been installed and its signature verified during setup. Open WebStorm, complete any required first-launch / licensing steps, then choose this repository folder. No license selection, login or paid subscription has been performed automatically. When scaffolding is added, update this file with the actual run/test commands and verified IDE setup.

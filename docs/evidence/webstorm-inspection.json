@@ -1,0 +1,208 @@
+{
+  "date": "2026-11-19",
+  "tool": "WebStorm 2026.3",
+  "build": "WS-263.7307.202",
+  "mode": "command-line offline inspection",
+  "profile": "Default",
+  "exitCode": 0,
+  "interactiveDebuggingPerformed": false,
+  "ideTestsPerformed": false,
+  "findings": [
+    {
+      "file": "src/style.css",
+      "line": "89",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "166",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "195",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "238",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "262",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "294",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "480",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "643",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "717",
+      "inspection": "CssNonIntegerLengthInPixels",
+      "severity": "WEAK WARNING",
+      "description": "Float px values may render differently on different browsers"
+    },
+    {
+      "file": "src/style.css",
+      "line": "391",
+      "inspection": "CssUnusedSymbol",
+      "severity": "WARNING",
+      "description": "Selector active is never used"
+    },
+    {
+      "file": "docs/COMPETITION_PLAN.md",
+      "line": "23",
+      "inspection": "GrazieInspection",
+      "severity": "GRAMMAR_ERROR",
+      "description": "This word is normally spelled with a hyphen."
+    },
+    {
+      "file": "docs/COMPETITION_PLAN.md",
+      "line": "21",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Some style guides suggest that commas should set off the year in a month-day-year date."
+    },
+    {
+      "file": "docs/COMPETITION_PLAN.md",
+      "line": "21",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Some style guides suggest that commas should set off the year in a month-day-year date."
+    },
+    {
+      "file": "docs/COMPETITION_PLAN.md",
+      "line": "21",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Some style guides suggest that commas should set off the year in a month-day-year date."
+    },
+    {
+      "file": "docs/COMPETITION_PLAN.md",
+      "line": "85",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Some style guides suggest that commas should set off the year in a month-day-year date."
+    },
+    {
+      "file": "public/third-party/three-LICENSE.txt",
+      "line": "10",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Long sentences (67 words here) are harder to read, according to the research; consider splitting"
+    },
+    {
+      "file": "public/third-party/three-LICENSE.txt",
+      "line": "21",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Long sentences (46 words here) are harder to read, according to the research; consider splitting"
+    },
+    {
+      "file": "docs/DEVELOPMENT_LOG.md",
+      "line": "31",
+      "inspection": "GrazieStyle",
+      "severity": "STYLE_SUGGESTION",
+      "description": "Some style guides suggest that commas should set off the year in a month-day-year date."
+    },
+    {
+      "file": "scripts/serve.mjs",
+      "line": "44",
+      "inspection": "JSCheckFunctionSignatures",
+      "severity": "WEAK WARNING",
+      "description": "<html>Argument type <code><span style=\"\">{&#32;port:&#32;</span><span style=\"color:#000080;\">number</span><span style=\"\">,&#32;host:&#32;</span><span style=\"color:#000080;\">string&#32;</span><span style=\"\">}</span></code> is not assignable to parameter type <code><span style=\"color:#000080;\">number</span></code></html>"
+    },
+    {
+      "file": "scripts/serve.mjs",
+      "line": "44",
+      "inspection": "JSCheckFunctionSignatures",
+      "severity": "WEAK WARNING",
+      "description": "<html>Argument type <code><span style=\"color:#000080;\">function</span><span style=\"\">():&#32;</span><span style=\"color:#000080;\">void</span></code> is not assignable to parameter type <code><span style=\"color:#000080;\">string&#32;</span><span style=\"\">|&#32;</span><span style=\"color:#000080;\">undefined</span></code><br/>&nbsp;&nbsp;Type <code><span style=\"color:#000080;\">function</span><span style=\"\">():&#32;</span><span style=\"color:#000080;\">void</span></code> is not assignable to type <code><span style=\"color:#000080;\">string</span></code></html>"
+    },
+    {
+      "file": "tests/session.test.ts",
+      "line": "40",
+      "inspection": "JSUnusedGlobalSymbols",
+      "severity": "WARNING",
+      "description": "Unused property getItem"
+    },
+    {
+      "file": "tests/session.test.ts",
+      "line": "41",
+      "inspection": "JSUnusedGlobalSymbols",
+      "severity": "WARNING",
+      "description": "Unused property setItem"
+    },
+    {
+      "file": "tests/session.test.ts",
+      "line": "52",
+      "inspection": "JSUnusedGlobalSymbols",
+      "severity": "WARNING",
+      "description": "Unused function getItem"
+    },
+    {
+      "file": "tests/session.test.ts",
+      "line": "55",
+      "inspection": "JSUnusedGlobalSymbols",
+      "severity": "WARNING",
+      "description": "Unused function setItem"
+    },
+    {
+      "file": "README.md",
+      "line": "9",
+      "inspection": "MarkdownUnresolvedFileReference",
+      "severity": "WARNING",
+      "description": "Cannot resolve file 'QA.md'"
+    },
+    {
+      "file": "README.md",
+      "line": "57",
+      "inspection": "MarkdownUnresolvedFileReference",
+      "severity": "WARNING",
+      "description": "Cannot resolve file 'QA.md'"
+    },
+    {
+      "file": ".github/workflows/quality.yml",
+      "line": "43",
+      "inspection": "UndefinedParamsPresent",
+      "severity": "WARNING",
+      "description": "Undefined parameter: \"node-version-file\""
+    },
+    {
+      "file": ".github/workflows/quality.yml",
+      "line": "44",
+      "inspection": "UndefinedParamsPresent",
+      "severity": "WARNING",
+      "description": "Undefined parameter: \"cache\""
+    }
+  ]
+}

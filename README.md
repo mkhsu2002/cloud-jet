@@ -2,53 +2,62 @@
 
 **One button. Two golden moments. Every millisecond matters.**
 
-Cloud Jet is a planned futuristic hover-racing time trial for the [Cloud9 × JetBrains Sky's the Limit Hackathon](https://cloud9.devpost.com/rules). Built by FlyPig. This repository starts with a design and development plan, not a finished game.
+A playable, browser-based hover-racing time trial by FlyPig. Fly above the clouds, hold a drift through the bend, and release into a burst of speed. Mistakes cost time; they never eliminate you.
 
-## Why this game?
+## Play
 
-We want to build something people can immediately pick up at an event booth and want to play again, rather than a demonstration that needs a lengthy tutorial. Cloud9 has previously brought hackathon projects to live events ([official case study](https://cloud9.gg/case-study/jetbrains-hackathon/)). We therefore started with the precision of a single button press and turned a reaction test into hover racing with visible feedback through speed, racing lines and risk.
+Open the game in a modern browser with WebGL 2 and hardware acceleration. The hosted demo URL is recorded in [release status](docs/QA.md). No login is required.
 
-The name Cloud Jet combines a track in the clouds with jet-powered acceleration; Drift & Boost describes the gameplay directly. This is an independent competition concept, not an official Cloud9 or JetBrains product or endorsement.
+- **Skyline Circuit**: a 2,450 m course with five corners, countdown, finish timer and instant replay.
+- **First Flight**: a 650 m single-corner practice course.
+- Press **Space** at the gold entry line, hold through the bend, release at the cyan exit line. The on-screen button supports the same mouse/touch hold-and-release action.
+- Entry timing changes the racing line and energy buildup; release timing changes exit acceleration. Poor lines can graze the wall and slow you down.
+- Rankings are saved on this browser/device, separately for each course version. They are informal local records, not a trusted global leaderboard.
+- Sound is muted initially. Enable it with the sound button. Low effects reduces scenery and camera effects; reduced-motion preference enables it automatically.
+- Leaving the window or suspending the tab interrupts the attempt. Start a fresh flight to set a time.
 
-## The two golden moments
+## Run locally
 
-- The vehicle moves forward automatically. Players control one button: Space first, with touch input planned later.
-- **Press at the golden moment** to enter a drift. Keep holding to sustain the drift and build energy.
-- **Release at the golden moment** to end the drift and boost down the exit straight.
-- Pressing too early or too late affects the racing line and energy buildup. Releasing too early produces a weaker boost. Releasing too late delays forward acceleration and may cause wall contact that costs time.
-- **Mistakes do not prevent finishing; they only cost time.** No elimination or forced-restart penalty. The game needs safe guidance and recovery from getting stuck.
-- Race against the clock on a fixed course, comparing actual finish times. Feedback must appear in the vehicle's line, speed and propulsion, not just a Perfect label.
+Use **Node 24.22.3** (also in `.nvmrc`). With nvm, run `nvm use` after installing that version.
 
-## Visual direction and booth goals
+```sh
+npm ci
+npm run dev
+```
 
-A polished futuristic look: floating tracks above a sea of clouds, beautiful jet trails and easy-to-read corners. Explore blue and white alongside colorful geometry as subtle visual references to Cloud9 and JetBrains. Use official trademarks or assets only after confirming permission. Prioritize clear input feedback and smooth rendering before adding effects.
+Open the URL printed by Vite. To verify and run the production build:
 
-Design targets: approximately 45–75 seconds per run, one-button replay, clear rankings and no login. These are our design targets, not organizer requirements. The booth version should work offline and reset quickly; a second-screen leaderboard is a later extension.
+```sh
+npm test
+npm run format:check
+npm run build
+npm run serve:offline
+```
 
-## Development: Codex leads, JetBrains provides verifiable engineering work
+Visit http://127.0.0.1:4173. All browser assets are bundled. The offline server needs only Node built-ins and `dist/`; see [booth operation](docs/BOOTH.md) for moving it to another computer. The hosted page is not an installable offline PWA.
 
-The planned browser stack is TypeScript + Vite + Three.js, avoiding a large game engine at the outset. These project dependencies have not yet been installed, and the game has not been implemented.
+## Architecture
 
-- **Codex**: primary implementation, scene and UI iteration, documentation and automated tests.
-- **JetBrains WebStorm**: TypeScript inspections, breakpoint debugging, test execution and refactoring review for the drift state machine and input timing. In particular, verify that press / hold / release behavior is independent of rendering frame rate.
-- **Optional Junie / Air**: help propose boundary tests and review changes only after availability and authorization are confirmed. This is not a record of completed usage, and these tools are not required installations.
+TypeScript + Vite + Three.js, plain HTML/CSS overlays, synthesized Web Audio and localStorage. No backend, accounts, telemetry or runtime third-party API is used.
 
-WebStorm is not chosen merely to meet the competition's tooling requirement. Fairness in this game depends on timing and state details, which need a workflow that traces events, reproduces bugs and runs tests. Record the tools, versions, actions and evidence actually used in the [development log](docs/DEVELOPMENT_LOG.md), without presenting plans as completed work.
+- `src/simulation.ts`: deterministic 120 Hz race simulation, timestamped input, drift/boost energy, speed, wall contact and finish time.
+- `src/session.ts`: countdown, racing, finish and interruption lifecycle.
+- `src/world.ts`: original procedural vehicle, tracks, scenery and visual feedback.
+- `src/main.ts`: keyboard/pointer interaction, accessible UI, results and display settings.
+- `src/records.ts`: validated local records and graceful storage failure.
+- `src/audio.ts`: opt-in engine and cue synthesis.
+- `tests/`: timing, recovery, frame-rate replay, reset, lifecycle and storage tests.
 
-## MVP and development handoff
+Rendering does not decide timing quality. Input replays are tested across 30/60/120 fps render schedules; device latency still depends on the actual hardware. CI runs only for game/build/test-related changes, with concurrency cancellation. Documentation-only changes do not trigger a full build or deployment. Public deployment is a deliberate direct-upload release, not triggered by every Git push.
 
-See the [MVP plan](docs/MVP.md), [JetBrains workflow](docs/JETBRAINS.md) and [Codex guidelines](AGENTS.md).
+## Competition and tool evidence
 
-The [competition strategy and execution plan](docs/COMPETITION_PLAN.md), prepared on November 19, 2026, proposes Category 3 positioning, a delivery schedule, evidence requirements and submission checks. It records the current official-rule review and remaining verification items; its milestones are plans, not completed work.
+Prepared for **Category 3: Event Mini Game** of the [Cloud9 × JetBrains Sky's the Limit Hackathon](https://cloud9.devpost.com/rules). This is an independent project, not an official Cloud9 or JetBrains product or endorsement. Eligibility, current category specifics and final submission remain separate checks.
 
-The first stage is just a straight, one corner and an exit straight, to establish whether holding to drift and releasing to boost feels good. Then expand to a complete timed course, visual polish and booth reliability. This stage covers project setup and planning; there is no runnable game or passed game test suite yet.
+Codex assists implementation; WebStorm 2026.3 has performed an actual offline project inspection. The inspected findings, completed checks and remaining limitations are recorded in the [development log](docs/DEVELOPMENT_LOG.md), [JetBrains workflow](docs/JETBRAINS.md) and [QA status](docs/QA.md). Interactive IDE debugging and IDE test execution must not be claimed until performed.
 
-## Development history
-
-- **2026-11-18**: established the booth-oriented direction, single-button dual-timing mechanic and forgiving completion principle.
-- **2026-11-18**: selected **Cloud Jet: Drift & Boost** as the name and created an independent public repository, design documentation and a Codex / JetBrains division of work.
-- Future implementation, test results, tool usage and design revisions will be added to the development log.
+The [competition plan](docs/COMPETITION_PLAN.md) records the two-day scope. The earlier multi-week delivery proposal was superseded on November 19, 2026. This repository now contains a runnable game; older setup-only entries in the development log are historical checkpoints.
 
 ## License
 
-Project-authored code and documentation: [MIT](LICENSE). Third-party names, trademarks, and future third-party assets are not licensed by this project; keep their rights and attribution separate.
+Project code, procedural assets and documentation: [MIT](LICENSE). See [asset provenance](docs/ASSETS.md) and the bundled [Three.js license](public/third-party/three-LICENSE.txt). Third-party names and trademarks retain their own rights.

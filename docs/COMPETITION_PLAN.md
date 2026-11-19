@@ -1,7 +1,7 @@
 # Competition strategy and execution plan
 
 Prepared: 2026-11-19 (America/Vancouver).
-Status: proposed plan for review; no game implementation, playtest, deployment or submission has been completed by this planning task.
+Status updated 2026-11-19: MK approved the stack and authorized continuous implementation. The browser game is implemented; see QA.md for actual verification/release status. Competition submission remains unfinished. Historical planning targets below are not completion claims.
 
 ## Recommendation
 
@@ -55,7 +55,7 @@ These are internal product goals and evidence plans, not official numeric scorin
 
 ## MVP architecture and behavior
 
-Use the README's proposed TypeScript + Vite + Three.js stack, with a supported Node LTS selected when scaffolding and exact dependencies pinned in a lockfile. No packages have yet been selected or installed.
+Implemented stack: TypeScript + Vite + Three.js on Node 24.22.3, with exact package versions and a lockfile. See README.md for the source layout and actual run commands.
 
 - Simulation owns race time, progress, speed, lateral position, drift energy, boost and collision/recovery. A fixed update step consumes ordered input timestamps; rendering never decides timing quality.
 - Track data owns a fixed course, corner geometry and entry/exit windows. Start with one bend; expand to a small sequence of distinct bends only after that slice is enjoyable.
@@ -80,7 +80,7 @@ Target: November 19–20, 2026 (America/Vancouver). Work continuously through im
 | Day 2, first block | Original 3D presentation, audio, clear cues, low-effects option, local offline package | Smooth play on the target machine; all assets bundled; real WebStorm debugging/test evidence recorded |
 | Day 2, second block | Playtest/fixes, soak test, hosted candidate, run instructions and submission materials | Build/test checks, public-copy review, source/build correspondence and actual online/offline play verified |
 
-Use TypeScript + Vite + Three.js with WebGL rendering, plain HTML/CSS overlays, Web Audio and versioned localStorage records. Keep simulation separate from rendering. Vitest is the proposed simulation-test runner. Runtime and dependency versions are selected and pinned during setup. Avoid a backend, full physics engine, multiplayer and elaborate asset pipelines in this sprint.
+Use TypeScript + Vite + Three.js with WebGL rendering, plain HTML/CSS overlays, Web Audio and versioned localStorage records. Keep simulation separate from rendering. Vitest is the proposed simulation-test runner. Runtime and dependencies are now pinned in .nvmrc, package.json and package-lock.json. Avoid a backend, full physics engine, multiplayer and elaborate asset pipelines in this sprint.
 
 Deployment and submission materials are part of the target. External publication follows the applicable release checks; MK performs any binding final competition submission. Preserve judge access through February 3, 2027 at 15:00 Pacific once submitted.
 
@@ -111,4 +111,4 @@ Prepare these deliverables against one tagged release:
 - Asset/license inventory covering models, textures, fonts, audio and dependencies. Use original presentation and no unauthorized third-party logos or music.
 - Final checklist: current specifics/rules, eligibility/registration confirmation, public links in a signed-out readback, actual game/video consistency, source/build correspondence, English public copy review, recorded platform receipt after MK's final submission.
 
-MK owns creative review, external playtest recruitment, account/license/security interactions, and binding final submission. Codex can prepare implementation, tests, documentation and release artifacts after scope approval. No registration, deployment, external publishing or submission was performed during this planning task.
+MK owns creative review, external playtest recruitment, account/license/security interactions, and binding final submission. MK authorized implementation after reviewing the stack. Codex is completing the implementation, tests, documentation and release artifacts in the current sprint. Use QA.md for observed release status. No competition registration or binding submission has been performed by this task.

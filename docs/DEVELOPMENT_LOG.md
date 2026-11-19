@@ -37,3 +37,13 @@
 - MK replaced the multi-week delivery proposal with a focused November 19–20 sprint. The previous implementation schedule is superseded.
 - Rechecked current official rules and Vite/Three.js documentation for the browser-first recommendation. WebStorm qualifies as the required JetBrains tool when genuinely used; a web demo is explicitly supported by the rules.
 - Recommended TypeScript + Vite + Three.js, separate deterministic simulation, plain HTML/CSS UI, Web Audio, localStorage and Vitest. No runtime dependencies have been installed or game behavior tested yet.
+
+## 2026-11-19 · Playable game implementation
+
+- Implemented the approved browser stack on Node 24.22.3: deterministic 120 Hz simulation, original procedural Three.js scene, keyboard/pointer input, synthesized audio and responsive HTML/CSS UI.
+- Completed First Flight (one bend) before testing the full five-corner Skyline Circuit. Added countdown, results, instant replay, local versioned rankings, low-effects mode and interruption handling.
+- Observed failing behavior tests before implementing the simulation/session/storage behavior; the final suite has 14 passing tests, including 100 full-course stress replays. Clean install, TypeScript/build and format checks are part of validation.
+- Ran WebStorm 2026.3's actual offline project inspection twice. Reviewed findings and renamed the DOM helper, imported process explicitly and changed server-listen options. Saved a sanitized final diagnostic report. No interactive IDE breakpoint debugging or IDE test execution is claimed.
+- Browser checks observed a keyboard practice finish at 11.983 s, a complete circuit at 46.217 s despite wall grazes, and an on-screen-button practice finish at 11.883 s with networking disabled after loading. Verified interrupted-attempt restart and inspected desktop/mobile layouts. Details and limits are in QA.md.
+- Added local offline operation, asset/license provenance, a Three.js notice, actual source/run instructions and path-filtered quality CI. Historical setup-only documents now point to current game/QA status.
+- Created the Cloudflare Pages project using an existing Keychain credential after discovering expired Wrangler OAuth. Deployment and live readback are a separate release checkpoint below.
